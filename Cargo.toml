@@ -1,0 +1,7 @@
+[package]
+name = "gus"
+version = "0.0.1"
+authors = ["Vladislav Melnik <vlad9486@gmail.com>"]
+
+[dependencies]
+rand = "0.3"
