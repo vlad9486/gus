@@ -2,6 +2,10 @@ use std::ops::Mul;
 use std::ops::Add;
 use std::ops::Div;
 
+use rand::Rng;
+use rand::distributions::Sample;
+use rand::distributions::Range;
+
 const SIZE: usize = 3;
 
 /// Frequency struct is index in table
@@ -21,12 +25,16 @@ impl Frequency {
 
 #[derive(Copy, Clone, Default)]
 pub struct Density {
-    pub value: f32
+    value: f32
 }
 
 impl Density {
     pub fn new(value: f32) -> Self {
         Density { value: value }
+    }
+    
+    pub fn fate(self, mut rng: &mut Rng) -> bool {
+        Range::new(0.0f32, 1.0f32).sample(&mut rng) < self.value
     }
 }
 
@@ -138,9 +146,9 @@ impl Add<Frequency> for Beam {
 pub struct Material {
     emission: Beam,
     diffuse: Beam,
-    reflection: Beam/*,
+    reflection: Beam,
     refraction: Beam,
-    refraction_factor: Beam*/
+    refraction_factor: Beam
 }
 
 impl Material {
@@ -148,7 +156,9 @@ impl Material {
         Material {
             emission: beam,
             diffuse: Beam::default(),
-            reflection: Beam::default()
+            reflection: Beam::default(),
+            refraction: Beam::default(),
+            refraction_factor: Beam::default()
         }
     }
     
@@ -156,7 +166,9 @@ impl Material {
         Material {
             emission: Beam::default(),
             diffuse: beam,
-            reflection: Beam::default()
+            reflection: Beam::default(),
+            refraction: Beam::default(),
+            refraction_factor: Beam::default()
         }
     }
     
@@ -164,16 +176,33 @@ impl Material {
         Material {
             emission: Beam::default(),
             diffuse: Beam::default(),
-            reflection: beam
+            reflection: beam,
+            refraction: Beam::default(),
+            refraction_factor: Beam::default()
         }
     }
     
-    pub fn density(&self, frequency: Frequency) -> (Density, Density, Density) {
+    pub fn refraction(beam: Beam, factor: Beam) -> Self {
+        Material {
+            emission: Beam::default(),
+            diffuse: Beam::default(),
+            reflection: Beam::default(),
+            refraction: beam,
+            refraction_factor: factor
+        }
+    }
+    
+    pub fn density(&self, frequency: Frequency) -> (Density, Density, Density, Density) {
         (
             self.emission.density(frequency),
             self.diffuse.density(frequency),
-            self.reflection.density(frequency)
+            self.reflection.density(frequency),
+            self.refraction.density(frequency)
         )
+    }
+    
+    pub fn factor(&self, frequency: Frequency) -> f32 {
+        self.refraction_factor.density(frequency).value
     }
 }
 
@@ -184,7 +213,9 @@ impl Add for Material {
         Material {
             emission: self.emission + rhs.emission,
             diffuse: self.diffuse + rhs.diffuse,
-            reflection: self.reflection + rhs.reflection
+            reflection: self.reflection + rhs.reflection,
+            refraction: self.refraction + rhs.refraction,
+            refraction_factor: self.refraction_factor + rhs.refraction_factor
         }
     }
 }
@@ -196,7 +227,9 @@ impl Mul<f32> for Material {
         Material {
             emission: self.emission * rhs,
             diffuse: self.diffuse * rhs,
-            reflection: self.reflection * rhs
+            reflection: self.reflection * rhs,
+            refraction: self.refraction * rhs,
+            refraction_factor: self.refraction_factor * rhs
         }
     }
 }

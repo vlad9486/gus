@@ -16,8 +16,6 @@ use self::primitive::Sphere;
 use std::cmp::Ordering;
 
 use rand::Rng;
-use rand::distributions::Sample;
-use rand::distributions::Range;
 
 #[derive(Copy, Clone)]
 pub struct Ray {
@@ -61,15 +59,13 @@ impl Scene {
                 let result = sphere.result(&ray, m);
                 let mut rays = Vec::with_capacity(8);
                 
-                let (e_fate, d_fate, r_fate) = result.material.density(ray.frequency);
+                let (e_fate, d_fate, r_fate, _) = result.material.density(ray.frequency);
                 
-                let fate = Range::new(0.0f32, 1.0f32).sample(&mut rng);
-                if fate < e_fate.value {
+                if e_fate.fate(&mut rng) {
                     rays.push(ray);
                 }
                 
-                let fate = Range::new(0.0f32, 1.0f32).sample(&mut rng);
-                if fate < d_fate.value {
+                if d_fate.fate(&mut rng) {
                     let direction = diffuse(result.normal, &mut rng);
                     let ray = Ray {
                         position: result.position + direction * 0.01,
@@ -79,8 +75,7 @@ impl Scene {
                     rays.append(&mut self.trace_internal(ray, rng, level + 1));
                 }
                 
-                let fate = Range::new(0.0f32, 1.0f32).sample(&mut rng);
-                if fate < r_fate.value {
+                if r_fate.fate(&mut rng) {
                     let direction = reflection(ray.direction, result.normal);
                     let ray = Ray {
                         position: result.position + direction * 0.01,
