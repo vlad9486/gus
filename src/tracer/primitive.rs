@@ -1,6 +1,6 @@
 use super::algebra::V3;
 use super::beam::Material;
-use super::Ray;
+use super::scene::Ray;
 
 use std::cmp::Ordering;
 use std::f32;

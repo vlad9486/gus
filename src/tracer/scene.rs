@@ -1,17 +1,12 @@
-pub mod algebra;
-mod geometry;
-pub mod beam;
-pub mod primitive;
-pub mod screen;
 
-use self::algebra::V3;
-use self::geometry::diffuse;
-use self::geometry::reflection;
-use self::geometry::refraction;
+use super::algebra::V3;
+use super::geometry::diffuse;
+use super::geometry::reflection;
+use super::geometry::refraction;
 
-use self::beam::Frequency;
+use super::beam::Frequency;
 
-use self::primitive::Sphere;
+use super::primitive::Sphere;
 
 use std::cmp::Ordering;
 

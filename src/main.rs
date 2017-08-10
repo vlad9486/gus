@@ -3,15 +3,15 @@
 
 extern crate rand;
 
-mod scene;
+mod tracer;
 
-use self::scene::algebra::V3;
-use self::scene::beam::Beam;
-use self::scene::Scene;
-use self::scene::primitive::Sphere;
-use self::scene::screen::*;
+use self::tracer::algebra::V3;
+use self::tracer::beam::Beam;
+use self::tracer::scene::Scene;
+use self::tracer::primitive::Sphere;
+use self::tracer::screen::*;
 
-use self::scene::beam::Material;
+use self::tracer::beam::Material;
 
 use std::io::Write;
 use std::fs::File;

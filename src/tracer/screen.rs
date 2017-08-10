@@ -1,6 +1,6 @@
 use super::algebra::V3;
-use super::Ray;
-use super::Scene;
+use super::scene::Ray;
+use super::scene::Scene;
 
 use super::beam::Frequency;
 use super::beam::Beam;
