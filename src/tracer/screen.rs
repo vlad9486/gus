@@ -34,7 +34,7 @@ pub struct Screen {
 
 impl Screen {
     pub fn new(format: Format, eye: Eye) -> Self {
-        let capacity = format.horizontal_count * format.vertical_count;
+        let capacity = format.horizontal_count * format.vertical_count * Beam::SIZE;
         let mut rays = Vec::with_capacity(capacity);
         
         for i in 0..format.vertical_count {

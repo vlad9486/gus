@@ -30,7 +30,7 @@ pub fn main() {
         
         let r = 100000.0;
         let zp = Sphere::new(V3::new(0.0, 0.0, r + 20.0), r, d_rg);
-        let zn = Sphere::new(V3::new(0.0, 0.0, -r - 10.0), r, d_rg);
+        let zn = Sphere::new(V3::new(0.0, 0.0, -r - 10.0), r, Material::diffuse(gray) * 0.5);
         let yp = Sphere::new(V3::new(0.0, r + 10.0, 0.0), r, d_gb);
         let yn = Sphere::new(V3::new(0.0, -r - 10.0, 0.0), r, d_gb);
         let xp = Sphere::new(V3::new(r + 10.0, 0.0, 0.0), r, d_br);
@@ -67,7 +67,7 @@ pub fn main() {
     
     let raw = {
         let mut sample = Sample::new(format.clone());
-        for i in 0..64 {
+        for i in 0..4 {
             screen.sample(&scene, &mut sample, &mut rng);
             println!("sample: {:?}", i + 1);
         }

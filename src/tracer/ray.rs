@@ -14,6 +14,8 @@ pub struct Ray {
 }
 
 impl Ray {
+    pub const EPS: f32 = 0.01;
+    
     pub fn new(position: V3, direction: V3, frequency: Frequency) -> Self {
         Ray {
             position: position, direction: direction, frequency: frequency
@@ -48,7 +50,7 @@ impl GeometricalRay for Ray {
         let v = V3::new(x, y, z);
         let direction = if v * normal >= 0.0f32 { v } else { v * (-1.0f32) };
         
-        Ray { position: position + direction * 0.01, direction: direction, frequency: self.frequency }
+        Ray { position: position + direction * Self::EPS, direction: direction, frequency: self.frequency }
     }
     
     fn reflect(&self, position: V3, normal: V3) -> Self {
@@ -56,7 +58,7 @@ impl GeometricalRay for Ray {
         let dot_product = incident * normal;
         let direction = normal * (-2.0f32 * dot_product) + incident;
         
-        Ray { position: position + direction * 0.01, direction: direction, frequency: self.frequency }
+        Ray { position: position + direction * Self::EPS, direction: direction, frequency: self.frequency }
     }
     
     fn refract(&self, position: V3, normal: V3, factor: f32) -> Self {
@@ -66,7 +68,7 @@ impl GeometricalRay for Ray {
         if sinb < 1.0f32 {
             let cosb = (1.0f32 - sinb * sinb).sqrt();
             let direction = temp * factor - normal * cosb;
-            Ray { position: position + direction * 0.01, direction: direction, frequency: self.frequency }
+            Ray { position: position + direction * Self::EPS, direction: direction, frequency: self.frequency }
         } else {
             self.reflect(position, normal)
         }
