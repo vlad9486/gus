@@ -8,6 +8,8 @@ use super::beam::Beam;
 use super::beam::RGB;
 
 use rand::Rng;
+use rand::distributions::Sample as RndSample;
+use rand::distributions::Range;
 
 #[derive(Copy, Clone)]
 pub struct Format {
@@ -29,47 +31,35 @@ pub struct Eye {
 
 pub struct Screen {
     format: Format,
-    initial: Vec<Ray>
+    eye: Eye
 }
 
 impl Screen {
     pub fn new(format: Format, eye: Eye) -> Self {
-        let capacity = format.horizontal_count * format.vertical_count * Beam::SIZE;
-        let mut rays = Vec::with_capacity(capacity);
-        
-        for i in 0..format.vertical_count {
-            for j in 0..format.horizontal_count {
-                let x = eye.width * ((j as f32) / (format.horizontal_count as f32) - 0.5f32);
-                let y = eye.height * ((i as f32) / (format.vertical_count as f32) - 0.5f32);
-                let direction = eye.forward * eye.distance + eye.right * x + eye.up * y;
-                let direction = direction.normalize();
-                
-                for k in 0..Beam::SIZE {
-                    rays.push(Ray::new(
-                        eye.position,
-                        direction,
-                        Frequency::new(k)
-                    ));
-                }
-            }
-        }
-        
-        Screen {
-            format: format,
-            initial: rays
-        }
+        Screen { format: format, eye: eye }
     }
     
     pub fn sample(&self, scene: &Scene, sample: &mut Sample, mut rng: &mut Rng) {
         let format = &self.format;
+        let eye = &self.eye;
         
         for i in 0..format.vertical_count {
             for j in 0..format.horizontal_count {
                 let mut beam = Beam::default();
+                
+                let dx = Range::new(-0.5f32, 0.5f32).sample(&mut rng);
+                let dy = Range::new(-0.5f32, 0.5f32).sample(&mut rng);
+                let x = eye.width * (((j as f32) + dx) / (format.horizontal_count as f32) - 0.5f32);
+                let y = eye.height * (((i as f32) + dy) / (format.vertical_count as f32) - 0.5f32);
+                let direction = eye.forward * eye.distance + eye.right * x + eye.up * y;
+                let direction = direction.normalize();
+                
                 for k in 0..Beam::SIZE {
-                    let index = (i * format.horizontal_count + j) * Beam::SIZE + k;
-                    let ray = &self.initial[index];
-                    let rays = scene.trace(ray, &mut rng);
+                    let rays = scene.trace(&Ray::new(
+                        eye.position,
+                        direction,
+                        Frequency::new(k)
+                    ), &mut rng);
                     beam = rays.into_iter().fold(beam, |beam, ray| { beam + ray.frequency() });
                 }
                 let mut rgb = &mut sample.data[i * format.horizontal_count + j];
