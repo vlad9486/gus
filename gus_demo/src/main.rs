@@ -1,11 +1,8 @@
-#![forbid(unsafe_code)]
-#![allow(non_shorthand_field_patterns)]
-
+extern crate gus;
 extern crate rand;
 extern crate chrono;
 
-mod tracer;
-use tracer::*;
+use gus::*;
 
 use std::io::Write;
 use std::fs::File;

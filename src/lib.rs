@@ -1,3 +1,8 @@
+#![forbid(unsafe_code)]
+#![allow(non_shorthand_field_patterns)]
+
+extern crate rand;
+
 mod algebra;
 mod beam;
 mod primitive;
