@@ -8,7 +8,7 @@ use super::beam::Beam;
 use super::beam::RGB;
 
 use rand::Rng;
-use rand::distributions::Sample as RndSample;
+use rand::distributions::Sample;
 use rand::distributions::Range;
 
 #[derive(Copy, Clone)]
@@ -39,7 +39,7 @@ impl Screen {
         Screen { format: format, eye: eye }
     }
     
-    pub fn sample(&self, scene: &Scene, sample: &mut Sample, mut rng: &mut Rng) {
+    pub fn sample(&self, scene: &Scene, image: &mut Image, mut rng: &mut Rng) {
         let format = &self.format;
         let eye = &self.eye;
         
@@ -62,22 +62,22 @@ impl Screen {
                     ), &mut rng);
                     beam = rays.into_iter().fold(beam, |beam, ray| { beam + ray.frequency() });
                 }
-                let mut rgb = &mut sample.data[i * format.horizontal_count + j];
+                let mut rgb = &mut image.data[i * format.horizontal_count + j];
                 *rgb = *rgb + beam.rgb()
             }
         }
         
-        sample.count = sample.count + 1;
+        image.count = image.count + 1;
     }
 }
 
-pub struct Sample {
+pub struct Image {
     format: Format,
     data: Vec<RGB>,
     count: usize
 }
 
-impl Sample {
+impl Image {
     pub fn new(format: Format) -> Self {
         let capacity = format.horizontal_count * format.vertical_count;
         let mut data = Vec::with_capacity(capacity);
@@ -86,7 +86,7 @@ impl Sample {
             data.push(RGB::default())
         }
         
-        Sample {
+        Image {
             format: format,
             data: data,
             count: 0

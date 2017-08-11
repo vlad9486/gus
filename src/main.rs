@@ -66,7 +66,7 @@ pub fn main() {
     let mut rng = rand::thread_rng();
     
     let raw = {
-        let mut sample = Sample::new(format.clone());
+        let mut sample = Image::new(format.clone());
         for i in 0..4 {
             screen.sample(&scene, &mut sample, &mut rng);
             println!("sample: {:?}", i + 1);
