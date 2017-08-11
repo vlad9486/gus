@@ -270,9 +270,15 @@ pub struct RGB {
 }
 
 impl RGB {
-    pub fn r(&self) -> f32 { self.r }
-    pub fn g(&self) -> f32 { self.g }
-    pub fn b(&self) -> f32 { self.b }
+    pub fn update_raw(self, raw: &mut Vec<u8>) {
+        let to_byte = |a: f32| -> u8 { 
+            if a > 1.0 { 255 } else if a < 0.0 { 0 } else { (a * 255.0) as u8 }
+        };
+        
+        raw.push(to_byte(self.b));
+        raw.push(to_byte(self.g));
+        raw.push(to_byte(self.r));
+    }
 }
 
 impl Add for RGB {

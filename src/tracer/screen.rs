@@ -69,7 +69,7 @@ impl Screen {
                 for k in 0..Beam::SIZE {
                     let index = (i * format.horizontal_count + j) * Beam::SIZE + k;
                     let ray = &self.initial[index];
-                    let rays: Vec<Ray> = scene.trace(ray, &mut rng);
+                    let rays = scene.trace(ray, &mut rng);
                     beam = rays.into_iter().fold(beam, |beam, ray| { beam + ray.frequency() });
                 }
                 let mut rgb = &mut sample.data[i * format.horizontal_count + j];
@@ -109,15 +109,7 @@ impl Sample {
         
         let mut result = Vec::with_capacity(capacity);
         for &pixel in self.data.iter() {
-            let rgb = pixel / self.count;
-            
-            let to_byte = |a: f32| -> u8 { 
-                if a > 1.0 { 255 } else if a < 0.0 { 0 } else { (a * 255.0) as u8 }
-            };
-            
-            result.push(to_byte(rgb.b()));
-            result.push(to_byte(rgb.g()));
-            result.push(to_byte(rgb.r()));
+            (pixel / self.count).update_raw(&mut result);
         }
         
         result
