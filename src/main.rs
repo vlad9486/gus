@@ -5,14 +5,7 @@ extern crate rand;
 extern crate chrono;
 
 mod tracer;
-
-use self::tracer::algebra::V3;
-use self::tracer::beam::Beam;
-use self::tracer::scene::Scene;
-use self::tracer::primitive::Sphere;
-use self::tracer::screen::*;
-
-use self::tracer::beam::Material;
+use tracer::*;
 
 use std::io::Write;
 use std::fs::File;
@@ -45,7 +38,7 @@ pub fn main() {
         Scene::new(vec!(zp, zn, yp, yn, xp, xn, ml, mr, mo, source))
     };
     
-    let format = Format {
+    let format = Size {
         horizontal_count: 1920,
         vertical_count: 1080
     };

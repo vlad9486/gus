@@ -12,7 +12,7 @@ use rand::distributions::Sample;
 use rand::distributions::Range;
 
 #[derive(Copy, Clone)]
-pub struct Format {
+pub struct Size {
     pub horizontal_count: usize,
     pub vertical_count: usize
 }
@@ -30,12 +30,12 @@ pub struct Eye {
 }
 
 pub struct Screen {
-    format: Format,
+    format: Size,
     eye: Eye
 }
 
 impl Screen {
-    pub fn new(format: Format, eye: Eye) -> Self {
+    pub fn new(format: Size, eye: Eye) -> Self {
         Screen { format: format, eye: eye }
     }
     
@@ -72,13 +72,13 @@ impl Screen {
 }
 
 pub struct Image {
-    format: Format,
+    format: Size,
     data: Vec<RGB>,
     count: usize
 }
 
 impl Image {
-    pub fn new(format: Format) -> Self {
+    pub fn new(format: Size) -> Self {
         let capacity = format.horizontal_count * format.vertical_count;
         let mut data = Vec::with_capacity(capacity);
         
