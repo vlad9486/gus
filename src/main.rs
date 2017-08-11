@@ -2,6 +2,7 @@
 #![allow(non_shorthand_field_patterns)]
 
 extern crate rand;
+extern crate chrono;
 
 mod tracer;
 
@@ -18,12 +19,14 @@ use std::fs::File;
 
 pub fn main() {
     let scene = {
+        let gray = Beam::red() + Beam::green() + Beam::blue();
+        
         let d_rg = Material::diffuse(Beam::red() + Beam::green());
         let d_gb = Material::diffuse(Beam::green() + Beam::blue());
         let d_br = Material::diffuse(Beam::blue() + Beam::red());
-        let e_w = Material::emission(Beam::red() + Beam::green() + Beam::blue());
+        let e_w = Material::emission(gray);
         
-        let dr = Material::diffuse(Beam::red()) * 0.3 + Material::reflection(Beam::red() + Beam::green() + Beam::blue()) * 0.8;
+        let dr = Material::diffuse(gray) * 0.01 + Material::reflection(gray) * 0.9;
         
         let r = 100000.0;
         let zp = Sphere::new(V3::new(0.0, 0.0, r + 20.0), r, d_rg);
@@ -36,14 +39,15 @@ pub fn main() {
         let source = Sphere::new(V3::new(0.0, 1000.0 + 9.98, 0.0), 1000.0, e_w);
         
         let ml = Sphere::new(V3::new(-2.0, 0.0, 15.0), 2.0, dr);
-        let mr = Sphere::new(V3::new(3.5, 1.0, 12.0), 3.0, dr);
+        let mr = Sphere::new(V3::new(3.5, -1.0, 12.0), 3.0, dr);
+        let mo = Sphere::new(V3::new(-1.5, 3.0, 9.0), 3.5, dr);
         
-        Scene::new(vec!(zp, zn, yp, yn, xp, xn, ml, mr, source))
+        Scene::new(vec!(zp, zn, yp, yn, xp, xn, ml, mr, mo, source))
     };
     
     let format = Format {
-        horizontal_count: 960,
-        vertical_count: 540
+        horizontal_count: 1920,
+        vertical_count: 1080
     };
     
     let eye = Eye {
@@ -63,16 +67,16 @@ pub fn main() {
     
     let raw = {
         let mut sample = Sample::new(format.clone());
-        for i in 0..80 {
+        for i in 0..64 {
             screen.sample(&scene, &mut sample, &mut rng);
-            println!("here {:?}", i)
+            println!("sample: {:?}", i + 1);
         }
         sample.raw_rgb()
     };
     
     let header = vec!(0u8, 0u8, 2u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                                           //width   height
-                      0u8, 0u8, 0u8, 0u8, 192u8, 3u8, 28u8, 2u8,
+                      0u8, 0u8, 0u8, 0u8, 128u8, 7u8, 56u8, 4u8,
                       24u8, 0u8);
     let mut file = File::create("out.tga").unwrap();
     let _ = file.write(header.as_slice()).unwrap();

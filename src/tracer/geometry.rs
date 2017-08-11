@@ -6,11 +6,11 @@ use rand::distributions::Range;
 use std::f32;
 
 pub fn diffuse(normal: V3, mut rng: &mut Rng) -> V3 {
-    
     let a = Range::new(0.0f32, f32::consts::PI * 2.0f32).sample(&mut rng);
-    let x = a.sin();
-    let y = a.cos();
     let z = Range::new(-1.0f32, 1.0f32).sample(&mut rng);
+    let r = (1.0f32 - z * z).sqrt();
+    let x = r * a.sin();
+    let y = r * a.cos();
     
     let v = V3::new(x, y, z);
     if v * normal >= 0.0f32 { v } else { v * (-1.0f32) }
@@ -18,7 +18,7 @@ pub fn diffuse(normal: V3, mut rng: &mut Rng) -> V3 {
 
 pub fn reflection(incident: V3, normal: V3) -> V3 {
     let dot_product = incident * normal;
-    normal * (-2.0f32 * dot_product) - incident
+    normal * (-2.0f32 * dot_product) + incident
 }
 
 pub fn refraction(incident: V3, normal: V3, factor: f32) -> V3 {

@@ -14,9 +14,9 @@ use rand::Rng;
 
 #[derive(Copy, Clone)]
 pub struct Ray {
-    position: V3,
-    direction: V3,
-    frequency: Frequency
+    pub position: V3,
+    pub direction: V3,
+    pub frequency: Frequency
 }
 
 pub struct Scene {

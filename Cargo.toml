@@ -5,3 +5,4 @@ authors = ["Vladislav Melnik <vlad9486@gmail.com>"]
 
 [dependencies]
 rand = "0.3"
+chrono = "0.4.0"
