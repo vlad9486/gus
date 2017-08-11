@@ -23,6 +23,18 @@ impl Frequency {
 
 /// Density struct is a number of particles in ray
 
+pub enum SingleFate {
+    Decay,
+    Diffuse,
+    Reflect,
+    Refract(f32)
+}
+
+pub struct Fate {
+    pub emission: bool,
+    pub single: SingleFate
+}
+
 #[derive(Copy, Clone, Default)]
 pub struct Density {
     value: f32
@@ -33,8 +45,24 @@ impl Density {
         Density { value: value }
     }
     
-    pub fn fate(self, mut rng: &mut Rng) -> bool {
+    fn fate(self, mut rng: &mut Rng) -> bool {
         Range::new(0.0f32, 1.0f32).sample(&mut rng) < self.value
+    }
+    
+    fn fate_3way(factor: f32, diffuse: Self, reflect: Self, refract: Self,
+            mut rng: &mut Rng) -> SingleFate {
+        use self::SingleFate::*;
+        
+        let fate = Range::new(0.0f32, 1.0f32).sample(&mut rng);
+        if fate < diffuse.value {
+            Diffuse
+        } else if fate < (diffuse + reflect).value {
+            Reflect
+        } else if fate < (diffuse + reflect + refract).value {
+            Refract(factor)
+        } else {
+            Decay
+        }
     }
 }
 
@@ -192,17 +220,17 @@ impl Material {
         }
     }
     
-    pub fn density(&self, frequency: Frequency) -> (Density, Density, Density, Density) {
-        (
-            self.emission.density(frequency),
-            self.diffuse.density(frequency),
-            self.reflection.density(frequency),
-            self.refraction.density(frequency)
-        )
-    }
-    
-    pub fn factor(&self, frequency: Frequency) -> f32 {
-        self.refraction_factor.density(frequency).value
+    pub fn fate(&self, frequency: Frequency, mut rng: &mut Rng) -> Fate {
+        Fate {
+            emission: self.emission.density(frequency).fate(&mut rng),
+            single: Density::fate_3way(
+                self.refraction_factor.density(frequency).value,
+                self.diffuse.density(frequency),
+                self.reflection.density(frequency),
+                self.refraction.density(frequency),
+                &mut rng
+            )
+        }
     }
 }
 

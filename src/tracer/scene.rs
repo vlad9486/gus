@@ -1,23 +1,14 @@
-
-use super::algebra::V3;
-use super::geometry::diffuse;
-use super::geometry::reflection;
-use super::geometry::refraction;
-
-use super::beam::Frequency;
-
 use super::primitive::Sphere;
+
+use super::ray::Ray;
+use super::ray::PhotonicRay;
+use super::ray::GeometricalRay;
+
+use super::beam::SingleFate;
 
 use std::cmp::Ordering;
 
 use rand::Rng;
-
-#[derive(Copy, Clone)]
-pub struct Ray {
-    pub position: V3,
-    pub direction: V3,
-    pub frequency: Frequency
-}
 
 pub struct Scene {
     spheres: Vec<Sphere>
@@ -28,18 +19,18 @@ impl Scene {
         Scene { spheres: spheres }
     }
     
-    pub fn trace(&self, ray: Ray, mut rng: &mut Rng) -> Vec<Ray> {
+    pub fn trace(&self, ray: &Ray, mut rng: &mut Rng) -> Vec<Ray> {
         self.trace_internal(ray, &mut rng, 0)
     }
     
-    fn trace_internal(&self, ray: Ray, mut rng: &mut Rng, level: usize) -> Vec<Ray> {
-        let maximal_level = 8;
+    fn trace_internal(&self, ray: &Ray, mut rng: &mut Rng, level: usize) -> Vec<Ray> {
+        let maximal_level = 7;
         if level == maximal_level {
             return Vec::new();
         }
         
         let minimal = self.spheres.iter().map(|sphere| {
-            (sphere, sphere.intersect(&ray))
+            (sphere, sphere.intersect(ray))
         }).min_by(|lhs, rhs| {
             match (&lhs.1, &rhs.1) {
                 (&None, &None) => Ordering::Equal,
@@ -51,33 +42,25 @@ impl Scene {
         
         match minimal {
             Some((sphere, Some(m))) => {
-                let result = sphere.result(&ray, m);
+                let result = sphere.result(ray, m);
                 let mut rays = Vec::with_capacity(8);
                 
-                let (e_fate, d_fate, r_fate, _) = result.material.density(ray.frequency);
+                let fate = result.material.fate(ray.frequency(), &mut rng);
                 
-                if e_fate.fate(&mut rng) {
-                    rays.push(ray);
+                if fate.emission {
+                    rays.push((*ray).clone());
                 }
                 
-                if d_fate.fate(&mut rng) {
-                    let direction = diffuse(result.normal, &mut rng);
-                    let ray = Ray {
-                        position: result.position + direction * 0.01,
-                        direction: direction,
-                        frequency: ray.frequency
-                    };
-                    rays.append(&mut self.trace_internal(ray, rng, level + 1));
-                }
+                use self::SingleFate::*;
+                let ray = match fate.single {
+                    Decay => None,
+                    Diffuse => Some(ray.diffuse(result.position, result.normal, &mut rng)),
+                    Reflect => Some(ray.reflect(result.position, result.normal)),
+                    Refract(factor) => Some(ray.refract(result.position, result.normal, factor)),
+                };
                 
-                if r_fate.fate(&mut rng) {
-                    let direction = reflection(ray.direction, result.normal);
-                    let ray = Ray {
-                        position: result.position + direction * 0.01,
-                        direction: direction,
-                        frequency: ray.frequency
-                    };
-                    rays.append(&mut self.trace_internal(ray, rng, level + 1));
+                if let Some(ray) = ray {
+                    rays.append(&mut self.trace_internal(&ray, rng, level + 1));
                 }
                 
                 rays

@@ -1,5 +1,6 @@
 use super::algebra::V3;
-use super::scene::Ray;
+use super::ray::Ray;
+use super::ray::PhotonicRay;
 use super::scene::Scene;
 
 use super::beam::Frequency;
@@ -44,11 +45,11 @@ impl Screen {
                 let direction = direction.normalize();
                 
                 for k in 0..Beam::SIZE {
-                    rays.push(Ray {
-                        position: eye.position,
-                        direction: direction,
-                        frequency: Frequency::new(k)
-                    });
+                    rays.push(Ray::new(
+                        eye.position,
+                        direction,
+                        Frequency::new(k)
+                    ));
                 }
             }
         }
@@ -68,8 +69,8 @@ impl Screen {
                 for k in 0..Beam::SIZE {
                     let index = (i * format.horizontal_count + j) * Beam::SIZE + k;
                     let ray = &self.initial[index];
-                    let rays: Vec<Ray> = scene.trace(*ray, &mut rng);
-                    beam = rays.into_iter().fold(beam, |beam, ray| { beam + ray.frequency });
+                    let rays: Vec<Ray> = scene.trace(ray, &mut rng);
+                    beam = rays.into_iter().fold(beam, |beam, ray| { beam + ray.frequency() });
                 }
                 let mut rgb = &mut sample.data[i * format.horizontal_count + j];
                 *rgb = *rgb + beam.rgb()

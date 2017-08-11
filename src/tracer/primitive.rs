@@ -1,6 +1,8 @@
 use super::algebra::V3;
 use super::beam::Material;
-use super::scene::Ray;
+
+use super::ray::Ray;
+use super::ray::GeometricalRay;
 
 use std::cmp::Ordering;
 use std::f32;
@@ -45,8 +47,8 @@ impl Sphere {
     }
     
     pub fn intersect(&self, ray: &Ray) -> Option<IntersectInfo> {
-        let q = self.center - ray.position;
-        let p = ray.direction;
+        let q = self.center - ray.position();
+        let p = ray.direction();
         let r = self.radius;
         
         let b = p * q;
@@ -69,7 +71,7 @@ impl Sphere {
     }
     
     pub fn result(&self, ray: &Ray, info: IntersectInfo) -> IntersectResult {
-        let position = ray.position + ray.direction * info.distance;
+        let position = ray.position() + ray.direction() * info.distance;
         let normal = (position - self.center) / info.r;
         IntersectResult {
             position: position,
