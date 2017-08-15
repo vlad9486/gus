@@ -6,6 +6,8 @@ use gus::*;
 
 use std::io::Write;
 use std::fs::File;
+use std::thread;
+use std::sync::Arc;
 
 pub fn main() {
     let scene = {
@@ -39,34 +41,50 @@ pub fn main() {
         Scene::new(vec![zp, zn, yp, yn, xp, xn, ml, mr, mo, source])
     };
 
-    let format = Size {
-        horizontal_count: 1920,
-        vertical_count: 1080,
+    let screen = {
+        let format = Size {
+            horizontal_count: 1920,
+            vertical_count: 1080,
+        };
+
+        let eye = Eye {
+            position: V3::new(0.0, 0.0, -9.0),
+            forward: V3::new(0.0, 0.0, 1.0),
+            right: V3::new(1.0, 0.0, 0.0),
+            up: V3::new(0.0, 1.0, 0.0),
+
+            width: 1.6,
+            height: 0.9,
+            distance: 1.5,
+        };
+
+        Screen::new(format.clone(), eye)
     };
 
-    let eye = Eye {
-        position: V3::new(0.0, 0.0, -9.0),
-        forward: V3::new(0.0, 0.0, 1.0),
-        right: V3::new(1.0, 0.0, 0.0),
-        up: V3::new(0.0, 1.0, 0.0),
+    let scene_ref = Arc::new(scene);
+    let screen_ref = Arc::new(screen);
 
-        width: 1.6,
-        height: 0.9,
-        distance: 1.5,
-    };
+    let threads: Vec<_> = (0..8).into_iter().map(|_| {
+        let scene_ref_clone = scene_ref.clone();
+        let screen_ref_clone = screen_ref.clone();
+        thread::spawn(move || {
+            let mut rng = rand::thread_rng();
+            let mut image = screen_ref_clone.create_image();
+            for i in 0..16 {
+                screen_ref_clone.sample(&*scene_ref_clone, &mut image, &mut rng);
+                println!("sample: {:?}", i + 1);
+            }
+            image
+        })
+    }).collect();
 
-    let screen = Screen::new(format.clone(), eye);
+    let mut result_image = (*screen_ref).create_image();
+    let images: Vec<Image> = threads.into_iter().map(|thread| { thread.join().unwrap() }).collect();
+    for &ref image in images.iter() {
+        result_image.append(&image);
+    }
 
-    let mut rng = rand::thread_rng();
-
-    let raw = {
-        let mut sample = Image::new(format.clone());
-        for i in 0..4 {
-            screen.sample(&scene, &mut sample, &mut rng);
-            println!("sample: {:?}", i + 1);
-        }
-        sample.raw_rgb()
-    };
+    let raw = result_image.raw_rgb();
 
     // TODO: use some third party for image format
     let header = vec![

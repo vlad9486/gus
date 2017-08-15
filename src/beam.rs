@@ -171,7 +171,7 @@ impl Add<Frequency> for Beam {
 
     fn add(self, rhs: Frequency) -> Self::Output {
         let Beam { powers: mut powers } = self;
-        powers[rhs.index] = powers[rhs.index] + 4.0;
+        powers[rhs.index] = powers[rhs.index] + 8.0;
         Beam { powers: powers }
     }
 }

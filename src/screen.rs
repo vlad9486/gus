@@ -13,7 +13,7 @@ use rand::Rng;
 use rand::distributions::Sample;
 use rand::distributions::Range;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Size {
     pub horizontal_count: usize,
     pub vertical_count: usize,
@@ -42,6 +42,10 @@ impl Screen {
             format: format,
             eye: eye,
         }
+    }
+
+    pub fn create_image(&self) -> Image {
+        Image::new(self.format)
     }
 
     pub fn sample(&self, scene: &Scene, image: &mut Image, mut rng: &mut Rng) {
@@ -88,7 +92,7 @@ pub struct Image {
 }
 
 impl Image {
-    pub fn new(format: Size) -> Self {
+    fn new(format: Size) -> Self {
         let capacity = format.horizontal_count * format.vertical_count;
         let mut data = Vec::with_capacity(capacity);
 
@@ -113,5 +117,14 @@ impl Image {
         }
 
         result
+    }
+
+    pub fn append(&mut self, other: &Self) {
+        assert!(self.format == other.format);
+
+        self.count = self.count + other.count;
+        for i in 0..self.data.len() {
+            self.data[i] = self.data[i] + other.data[i];
+        }
     }
 }
