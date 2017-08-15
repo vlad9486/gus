@@ -1,11 +1,13 @@
 use super::algebra::V3;
+use super::algebra::M;
+use super::algebra::M_INFINITY;
+
 use super::beam::Material;
 
 use super::ray::Ray;
 use super::ray::GeometricalRay;
 
 use std::cmp::Ordering;
-use std::f32;
 
 pub struct IntersectResult {
     pub position: V3,
@@ -15,15 +17,15 @@ pub struct IntersectResult {
 
 #[derive(PartialEq)]
 pub struct IntersectInfo {
-    pub distance: f32,
-    r: f32,
+    pub distance: M,
+    r: M,
 }
 
 impl Default for IntersectInfo {
     fn default() -> Self {
         IntersectInfo {
-            distance: f32::INFINITY,
-            r: 0.0f32,
+            distance: M_INFINITY,
+            r: 0.0,
         }
     }
 }
@@ -37,12 +39,12 @@ impl PartialOrd for IntersectInfo {
 #[derive(Copy, Clone)]
 pub struct Sphere {
     center: V3,
-    radius: f32,
+    radius: M,
     material: Material,
 }
 
 impl Sphere {
-    pub fn new(center: V3, radius: f32, material: Material) -> Self {
+    pub fn new(center: V3, radius: M, material: Material) -> Self {
         Sphere {
             center: center,
             radius: radius,
@@ -58,17 +60,17 @@ impl Sphere {
         let b = p * q;
         let (r, d) = {
             let s = q * q - r * r;
-            (if s >= 0.0f32 { r } else { -r }, b * b - s)
+            (if s >= 0.0 { r } else { -r }, b * b - s)
         };
 
-        let distance = if d < 0.0f32 {
+        let distance = if d < 0.0 {
             None
         } else {
             let t0 = b - d.sqrt();
             let t1 = b + d.sqrt();
-            if t0 >= 0.0f32 {
+            if t0 >= 0.0 {
                 Some(t0)
-            } else if t1 >= 0.0f32 {
+            } else if t1 >= 0.0 {
                 Some(t1)
             } else {
                 None

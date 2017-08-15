@@ -1,4 +1,6 @@
 use super::algebra::V3;
+use super::algebra::M;
+
 use super::ray::Ray;
 use super::ray::PhotonicRay;
 use super::scene::Scene;
@@ -24,9 +26,9 @@ pub struct Eye {
     pub right: V3,
     pub up: V3,
 
-    pub width: f32,
-    pub height: f32,
-    pub distance: f32,
+    pub width: M,
+    pub height: M,
+    pub distance: M,
 }
 
 pub struct Screen {
@@ -50,10 +52,10 @@ impl Screen {
             for j in 0..format.horizontal_count {
                 let mut beam = Beam::default();
 
-                let dx = Range::new(-0.5f32, 0.5f32).sample(&mut rng);
-                let dy = Range::new(-0.5f32, 0.5f32).sample(&mut rng);
-                let x = eye.width * (((j as f32) + dx) / (format.horizontal_count as f32) - 0.5f32);
-                let y = eye.height * (((i as f32) + dy) / (format.vertical_count as f32) - 0.5f32);
+                let dx = Range::new(-0.5, 0.5).sample(&mut rng);
+                let dy = Range::new(-0.5, 0.5).sample(&mut rng);
+                let x = eye.width * (((j as M) + dx) / (format.horizontal_count as M) - 0.5);
+                let y = eye.height * (((i as M) + dy) / (format.vertical_count as M) - 0.5);
                 let direction = eye.forward * eye.distance + eye.right * x + eye.up * y;
                 let direction = direction.normalize();
 

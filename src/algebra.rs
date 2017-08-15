@@ -4,19 +4,25 @@ use std::ops::Mul;
 use std::ops::Div;
 use std::ops::Neg;
 
+use std::f64;
+
+pub type M = f64;
+pub const M_PI: M = f64::consts::PI;
+pub const M_INFINITY: M = f64::INFINITY;
+
 #[derive(Copy, Clone)]
 pub struct V3 {
-    x: f32,
-    y: f32,
-    z: f32,
+    x: M,
+    y: M,
+    z: M,
 }
 
 impl V3 {
-    pub fn new(x: f32, y: f32, z: f32) -> Self {
+    pub fn new(x: M, y: M, z: M) -> Self {
         V3 { x: x, y: y, z: z }
     }
 
-    pub fn length(self) -> f32 {
+    pub fn length(self) -> M {
         (self * self).sqrt()
     }
 
@@ -58,17 +64,17 @@ impl Sub for V3 {
 }
 
 impl Mul<V3> for V3 {
-    type Output = f32;
+    type Output = M;
 
     fn mul(self, rhs: Self) -> Self::Output {
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
 }
 
-impl Mul<f32> for V3 {
+impl Mul<M> for V3 {
     type Output = Self;
 
-    fn mul(self, rhs: f32) -> Self::Output {
+    fn mul(self, rhs: M) -> Self::Output {
         V3 {
             x: self.x * rhs,
             y: self.y * rhs,
@@ -77,10 +83,10 @@ impl Mul<f32> for V3 {
     }
 }
 
-impl Div<f32> for V3 {
+impl Div<M> for V3 {
     type Output = Self;
 
-    fn div(self, rhs: f32) -> Self::Output {
+    fn div(self, rhs: M) -> Self::Output {
         V3 {
             x: self.x / rhs,
             y: self.y / rhs,

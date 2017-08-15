@@ -16,14 +16,14 @@ pub fn main() {
         let d_br = Material::diffuse(Beam::blue() + Beam::red());
         let e_w = Material::emission(gray);
 
-        let dr = Material::diffuse(gray) * 0.01 + Material::reflection(gray) * 0.9;
+        let dr = Material::diffuse(gray * 0.01) + Material::reflection(gray * 0.9);
 
         let r = 100000.0;
         let zp = Sphere::new(V3::new(0.0, 0.0, r + 20.0), r, d_rg);
         let zn = Sphere::new(
             V3::new(0.0, 0.0, -r - 10.0),
             r,
-            Material::diffuse(gray) * 0.5,
+            Material::diffuse(gray * 0.5),
         );
         let yp = Sphere::new(V3::new(0.0, r + 10.0, 0.0), r, d_gb);
         let yn = Sphere::new(V3::new(0.0, -r - 10.0, 0.0), r, d_gb);

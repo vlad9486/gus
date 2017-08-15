@@ -6,7 +6,7 @@ use rand::Rng;
 use rand::distributions::Sample;
 use rand::distributions::Range;
 
-const SIZE: usize = 3;
+const SIZE: usize = 4;
 
 /// Frequency struct is index in table
 #[derive(Copy, Clone)]
@@ -20,13 +20,18 @@ impl Frequency {
     }
 }
 
-/// Density struct is a number of particles in ray
+/// Density is a number of particles in ray
+
+type Density = f32;
+pub type Factor = f64;
+
+/// Fate
 
 pub enum SingleFate {
     Decay,
     Diffuse,
     Reflect,
-    Refract(f32),
+    Refract(Factor),
 }
 
 pub struct Fate {
@@ -34,55 +39,31 @@ pub struct Fate {
     pub single: SingleFate,
 }
 
-#[derive(Copy, Clone, Default)]
-pub struct Density {
-    value: f32,
+fn fate(value: Density, mut rng: &mut Rng) -> bool {
+    Range::new(0.0 as Density, 1.0).sample(&mut rng) < value
 }
 
-impl Density {
-    pub fn new(value: f32) -> Self {
-        Density { value: value }
-    }
+impl SingleFate {
 
-    fn fate(self, mut rng: &mut Rng) -> bool {
-        Range::new(0.0f32, 1.0f32).sample(&mut rng) < self.value
-    }
-
-    fn fate_3way(
-        factor: f32,
-        diffuse: Self,
-        reflect: Self,
-        refract: Self,
+    fn new(
+        factor: Factor,
+        diffuse: Density,
+        reflect: Density,
+        refract: Density,
         mut rng: &mut Rng,
-    ) -> SingleFate {
+    ) -> Self {
         use self::SingleFate::*;
 
-        let fate = Range::new(0.0f32, 1.0f32).sample(&mut rng);
-        if fate < diffuse.value {
+        let fate = Range::new(0.0 as Density, 1.0).sample(&mut rng);
+        if fate < diffuse {
             Diffuse
-        } else if fate < (diffuse + reflect).value {
+        } else if fate < diffuse + reflect {
             Reflect
-        } else if fate < (diffuse + reflect + refract).value {
+        } else if fate < diffuse + reflect + refract {
             Refract(factor)
         } else {
             Decay
         }
-    }
-}
-
-impl Mul for Density {
-    type Output = Self;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        Density { value: self.value * rhs.value }
-    }
-}
-
-impl Add for Density {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Density { value: self.value + rhs.value }
     }
 }
 
@@ -96,27 +77,27 @@ impl Beam {
     pub const SIZE: usize = SIZE;
 
     pub fn red() -> Self {
-        Beam { powers: [Density::new(1.0), Density::new(0.0), Density::new(0.0)] }
+        Beam { powers: [1.0, 0.0, 0.0, 0.0] }
     }
 
     pub fn green() -> Self {
-        Beam { powers: [Density::new(0.0), Density::new(1.0), Density::new(0.0)] }
+        Beam { powers: [0.0, 1.0, 0.0, 0.0] }
     }
 
     pub fn blue() -> Self {
-        Beam { powers: [Density::new(0.0), Density::new(0.0), Density::new(1.0)] }
+        Beam { powers: [0.0, 0.0, 0.5, 0.5] }
     }
 
     pub fn rgb(self) -> RGB {
         RGB {
-            r: (self.clone() * Beam::red()).value,
-            g: (self.clone() * Beam::green()).value,
-            b: (self.clone() * Beam::blue()).value,
+            r: self.clone() * Beam::red(),
+            g: self.clone() * Beam::green(),
+            b: self.clone() * Beam::blue(),
         }
     }
 
-    pub fn density(&self, frequency: Frequency) -> Density {
-        self.powers[frequency.index].clone()
+    fn density(&self, frequency: Frequency) -> Density {
+        self.powers[frequency.index]
     }
 }
 
@@ -124,7 +105,7 @@ impl Mul<Beam> for Beam {
     type Output = Density;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        let mut product = Density::default();
+        let mut product = 0.0;
         for i in 0..Self::SIZE {
             product = product + self.powers[i] * rhs.powers[i];
         }
@@ -133,14 +114,14 @@ impl Mul<Beam> for Beam {
     }
 }
 
-impl Mul<f32> for Beam {
+impl Mul<Density> for Beam {
     type Output = Beam;
 
-    fn mul(self, rhs: f32) -> Self::Output {
-        let mut powers = [Density::default(); Self::SIZE];
+    fn mul(self, rhs: Density) -> Self::Output {
+        let mut powers = [0.0; Self::SIZE];
 
         for i in 0..Self::SIZE {
-            powers[i] = self.powers[i] * Density { value: rhs };
+            powers[i] = self.powers[i] * rhs;
         }
 
         Beam { powers: powers }
@@ -151,7 +132,7 @@ impl Add<Beam> for Beam {
     type Output = Self;
 
     fn add(self, rhs: Beam) -> Self::Output {
-        let mut powers = [Density::default(); Self::SIZE];
+        let mut powers = [0.0; Self::SIZE];
 
         for i in 0..Self::SIZE {
             powers[i] = self.powers[i] + rhs.powers[i];
@@ -166,8 +147,61 @@ impl Add<Frequency> for Beam {
 
     fn add(self, rhs: Frequency) -> Self::Output {
         let Beam { powers: mut powers } = self;
-        powers[rhs.index] = powers[rhs.index] + Density::new(3.0);
+        powers[rhs.index] = powers[rhs.index] + 3.0;
         Beam { powers: powers }
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct BeamRefract {
+    powers: [Factor; SIZE],
+}
+
+impl BeamRefract {
+    pub const SIZE: usize = SIZE;
+
+    pub fn identity() -> Self {
+        BeamRefract {
+            powers: [1.0; SIZE]
+        }
+    }
+
+    fn factor(&self, frequency: Frequency) -> Factor {
+        self.powers[frequency.index]
+    }
+}
+
+impl Default for BeamRefract {
+    fn default() -> Self {
+        Self::identity()
+    }
+}
+
+impl Mul<Factor> for BeamRefract {
+    type Output = BeamRefract;
+
+    fn mul(self, rhs: Factor) -> Self::Output {
+        let mut powers = [0.0; Self::SIZE];
+
+        for i in 0..Self::SIZE {
+            powers[i] = self.powers[i] * rhs;
+        }
+
+        BeamRefract { powers: powers }
+    }
+}
+
+impl Add<BeamRefract> for BeamRefract {
+    type Output = Self;
+
+    fn add(self, rhs: BeamRefract) -> Self::Output {
+        let mut powers = [0.0; Self::SIZE];
+
+        for i in 0..Self::SIZE {
+            powers[i] = self.powers[i] + rhs.powers[i];
+        }
+
+        BeamRefract { powers: powers }
     }
 }
 
@@ -178,7 +212,7 @@ pub struct Material {
     diffuse: Beam,
     reflection: Beam,
     refraction: Beam,
-    refraction_factor: Beam,
+    refraction_factor: BeamRefract,
 }
 
 impl Material {
@@ -188,7 +222,7 @@ impl Material {
             diffuse: Beam::default(),
             reflection: Beam::default(),
             refraction: Beam::default(),
-            refraction_factor: Beam::default(),
+            refraction_factor: BeamRefract::default(),
         }
     }
 
@@ -198,7 +232,7 @@ impl Material {
             diffuse: beam,
             reflection: Beam::default(),
             refraction: Beam::default(),
-            refraction_factor: Beam::default(),
+            refraction_factor: BeamRefract::default(),
         }
     }
 
@@ -208,11 +242,11 @@ impl Material {
             diffuse: Beam::default(),
             reflection: beam,
             refraction: Beam::default(),
-            refraction_factor: Beam::default(),
+            refraction_factor: BeamRefract::default(),
         }
     }
 
-    pub fn refraction(beam: Beam, factor: Beam) -> Self {
+    pub fn refraction(beam: Beam, factor: BeamRefract) -> Self {
         Material {
             emission: Beam::default(),
             diffuse: Beam::default(),
@@ -224,9 +258,9 @@ impl Material {
 
     pub fn fate(&self, frequency: Frequency, mut rng: &mut Rng) -> Fate {
         Fate {
-            emission: self.emission.density(frequency).fate(&mut rng),
-            single: Density::fate_3way(
-                self.refraction_factor.density(frequency).value,
+            emission: fate(self.emission.density(frequency), &mut rng),
+            single: SingleFate::new(
+                self.refraction_factor.factor(frequency),
                 self.diffuse.density(frequency),
                 self.reflection.density(frequency),
                 self.refraction.density(frequency),
@@ -250,31 +284,17 @@ impl Add for Material {
     }
 }
 
-impl Mul<f32> for Material {
-    type Output = Self;
-
-    fn mul(self, rhs: f32) -> Self::Output {
-        Material {
-            emission: self.emission * rhs,
-            diffuse: self.diffuse * rhs,
-            reflection: self.reflection * rhs,
-            refraction: self.refraction * rhs,
-            refraction_factor: self.refraction_factor * rhs,
-        }
-    }
-}
-
 /// RGB struct to pass on the screen
 #[derive(Default, Copy, Clone)]
 pub struct RGB {
-    r: f32,
-    g: f32,
-    b: f32,
+    r: Density,
+    g: Density,
+    b: Density,
 }
 
 impl RGB {
     pub fn update_raw(self, raw: &mut Vec<u8>) {
-        let to_byte = |a: f32| -> u8 {
+        let to_byte = |a: Density| -> u8 {
             if a > 1.0 {
                 255
             } else if a < 0.0 {
@@ -306,7 +326,7 @@ impl Div<usize> for RGB {
     type Output = Self;
 
     fn div(self, rhs: usize) -> Self::Output {
-        let f = rhs as f32;
+        let f = rhs as Density;
         RGB {
             r: self.r / f,
             g: self.g / f,
