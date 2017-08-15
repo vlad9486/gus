@@ -8,6 +8,7 @@ use super::scene::Scene;
 use super::beam::Frequency;
 use super::beam::Beam;
 use super::beam::RGB;
+use super::beam::Density;
 
 use rand::Rng;
 use rand::distributions::Sample;
@@ -107,13 +108,13 @@ impl Image {
         }
     }
 
-    pub fn raw_rgb(self) -> Vec<u8> {
+    pub fn raw_rgb(self, scale: Density) -> Vec<u8> {
         let format = &self.format;
         let capacity = format.horizontal_count * format.vertical_count * 3;
 
         let mut result = Vec::with_capacity(capacity);
         for &pixel in self.data.iter() {
-            (pixel / self.count).update_raw(&mut result);
+            (pixel * scale / self.count).update_raw(&mut result);
         }
 
         result

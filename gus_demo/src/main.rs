@@ -84,7 +84,7 @@ pub fn main() {
         result_image.append(&image);
     }
 
-    let raw = result_image.raw_rgb();
+    let raw = result_image.raw_rgb(10.0);
 
     // TODO: use some third party for image format
     let header = vec![

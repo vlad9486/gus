@@ -24,7 +24,7 @@ impl Frequency {
 
 /// Density is a number of particles in ray
 
-type Density = f32;
+pub type Density = f32;
 pub type Factor = f64;
 
 /// Fate
@@ -171,7 +171,7 @@ impl Add<Frequency> for Beam {
 
     fn add(self, rhs: Frequency) -> Self::Output {
         let Beam { powers: mut powers } = self;
-        powers[rhs.index] = powers[rhs.index] + 8.0;
+        powers[rhs.index] = powers[rhs.index] + 1.0;
         Beam { powers: powers }
     }
 }
@@ -346,6 +346,18 @@ impl Add for RGB {
             r: self.r + rhs.r,
             g: self.g + rhs.g,
             b: self.b + rhs.b,
+        }
+    }
+}
+
+impl Mul<Density> for RGB {
+    type Output = Self;
+
+    fn mul(self, rhs: Density) -> Self::Output {
+        RGB {
+            r: self.r * rhs,
+            g: self.g * rhs,
+            b: self.b * rhs,
         }
     }
 }
