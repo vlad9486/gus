@@ -9,6 +9,7 @@ mod primitive;
 mod screen;
 mod scene;
 mod ray;
+mod color;
 
 pub use self::algebra::V3;
 pub use self::beam::Beam;

@@ -6,7 +6,9 @@ use rand::Rng;
 use rand::distributions::Sample;
 use rand::distributions::Range;
 
-const SIZE: usize = 4;
+use super::color;
+
+const SIZE: usize = 24;
 
 /// Frequency struct is index in table
 #[derive(Copy, Clone)]
@@ -76,16 +78,38 @@ pub struct Beam {
 impl Beam {
     pub const SIZE: usize = SIZE;
 
+    fn populate(index: usize) -> Self {
+        let mut powers = [0.0; Self::SIZE];
+        for i in 0..Self::SIZE {
+            let value = {
+                let j = (i * color::TABLE_SIZE) / Self::SIZE;
+                let table = color::table();
+                let rgb = table[j].1;
+                match index {
+                    0 => rgb.r,
+                    1 => rgb.g,
+                    _ => rgb.b
+                }
+            };
+
+            powers[i] = value;
+        }
+
+        let beam = Beam { powers: powers };
+        let length = (beam * beam).sqrt();
+        beam * (1.0 / length)
+    }
+
     pub fn red() -> Self {
-        Beam { powers: [1.0, 0.0, 0.0, 0.0] }
+        Self::populate(0)
     }
 
     pub fn green() -> Self {
-        Beam { powers: [0.0, 1.0, 0.0, 0.0] }
+        Self::populate(1)
     }
 
     pub fn blue() -> Self {
-        Beam { powers: [0.0, 0.0, 0.5, 0.5] }
+        Self::populate(2)
     }
 
     pub fn rgb(self) -> RGB {
@@ -147,7 +171,7 @@ impl Add<Frequency> for Beam {
 
     fn add(self, rhs: Frequency) -> Self::Output {
         let Beam { powers: mut powers } = self;
-        powers[rhs.index] = powers[rhs.index] + 3.0;
+        powers[rhs.index] = powers[rhs.index] + 4.0;
         Beam { powers: powers }
     }
 }
@@ -293,6 +317,10 @@ pub struct RGB {
 }
 
 impl RGB {
+    pub fn new(r: Density, g: Density, b: Density) -> Self {
+        RGB { r: r, g: g, b: b }
+    }
+
     pub fn update_raw(self, raw: &mut Vec<u8>) {
         let to_byte = |a: Density| -> u8 {
             if a > 1.0 {

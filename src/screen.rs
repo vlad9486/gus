@@ -52,16 +52,19 @@ impl Screen {
             for j in 0..format.horizontal_count {
                 let mut beam = Beam::default();
 
-                let dx = Range::new(-0.5, 0.5).sample(&mut rng);
-                let dy = Range::new(-0.5, 0.5).sample(&mut rng);
-                let x = eye.width * (((j as M) + dx) / (format.horizontal_count as M) - 0.5);
-                let y = eye.height * (((i as M) + dy) / (format.vertical_count as M) - 0.5);
-                let direction = eye.forward * eye.distance + eye.right * x + eye.up * y;
-                let direction = direction.normalize();
+                let direction_calc = |dx: M, dy: M| {
+                    let x = eye.width * (((j as M) + dx) / (format.horizontal_count as M) - 0.5);
+                    let y = eye.height * (((i as M) + dy) / (format.vertical_count as M) - 0.5);
+                    let direction = eye.forward * eye.distance + eye.right * x + eye.up * y;
+                    direction.normalize()
+                };
 
                 for k in 0..Beam::SIZE {
+                    let dx = Range::new(-0.5, 0.5).sample(&mut rng);
+                    let dy = Range::new(-0.5, 0.5).sample(&mut rng);
+
                     let rays = scene.trace(
-                        &Ray::new(eye.position, direction, Frequency::new(k)),
+                        &Ray::new(eye.position, direction_calc(dx, dy), Frequency::new(k)),
                         &mut rng,
                     );
                     beam = rays.into_iter().fold(
