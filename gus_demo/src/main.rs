@@ -1,8 +1,11 @@
 extern crate gus;
 extern crate rand;
 extern crate chrono;
+extern crate bincode;
 
 use gus::*;
+
+use bincode::{serialize, deserialize, Infinite};
 
 use std::io::Write;
 use std::fs::File;
@@ -64,13 +67,13 @@ pub fn main() {
     let scene_ref = Arc::new(scene);
     let screen_ref = Arc::new(screen);
 
-    let threads: Vec<_> = (0..8).into_iter().map(|_| {
+    let threads: Vec<_> = (0..4).into_iter().map(|_| {
         let scene_ref_clone = scene_ref.clone();
         let screen_ref_clone = screen_ref.clone();
         thread::spawn(move || {
             let mut rng = rand::thread_rng();
             let mut image = screen_ref_clone.create_image();
-            for i in 0..16 {
+            for i in 0..2 {
                 screen_ref_clone.sample(&*scene_ref_clone, &mut image, &mut rng);
                 println!("sample: {:?}", i + 1);
             }
@@ -82,6 +85,12 @@ pub fn main() {
     let images: Vec<Image> = threads.into_iter().map(|thread| { thread.join().unwrap() }).collect();
     for &ref image in images.iter() {
         result_image.append(&image);
+    }
+
+    {
+        let image_encoded: Vec<u8> = serialize(&result_image, Infinite).unwrap();
+        let mut file = File::create("out.gus").unwrap();
+        let _ = file.write(image_encoded.as_slice()).unwrap();
     }
 
     let raw = result_image.raw_rgb(10.0);
