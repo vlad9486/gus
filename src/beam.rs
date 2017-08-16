@@ -26,7 +26,7 @@ impl Frequency {
 
 /// Density is a number of particles in ray
 
-pub type Density = f32;
+pub type Density = f64;
 
 /// Factor is a refraction coefficient
 
