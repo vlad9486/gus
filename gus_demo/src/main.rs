@@ -4,7 +4,11 @@ extern crate chrono;
 extern crate bincode;
 extern crate serde_json;
 
+#[macro_use]
+extern crate serde_derive;
+
 mod tracer;
+mod tga;
 
 use gus::*;
 
@@ -16,11 +20,9 @@ use std::io::BufRead;
 use std::io::stdin;
 use std::fs::File;
 use std::fs::remove_file;
-use std::thread;
-use std::sync::Arc;
 
 use self::tracer::Tracer;
-use self::tracer::Status;
+use self::tga::TgaHeader;
 
 pub fn main() {
     let scene = {
@@ -54,7 +56,7 @@ pub fn main() {
         Scene::new(vec![zp, zn, yp, yn, xp, xn, ml, mr, mo, source])
     };
 
-    let screen = {
+    let (screen, image_header) = {
         let format = Size {
             horizontal_count: 1920,
             vertical_count: 1080,
@@ -71,8 +73,18 @@ pub fn main() {
             distance: 1.5,
         };
 
-        Screen::new(format.clone(), eye)
+        (
+            Screen::new(format.clone(), eye),
+            TgaHeader::rgb(format.horizontal_count, format.vertical_count)
+        )
     };
+
+    /*let scene = {
+        let mut file = File::open(scene_filename)?;
+        let mut string = String::new();
+        file.read_to_string(&mut string)?;
+        deserialize(string.as_bytes()).unwrap()
+    };*/
 
     let mut tracer = Tracer::new(scene, screen);
     let image = {
@@ -81,7 +93,10 @@ pub fn main() {
         file.read_to_end(&mut data).unwrap();
         deserialize(data.as_slice()).unwrap()
     };
-    tracer.start(4, Some(image));
+    tracer.start(4, Some(image), |tid, sample| {
+        println!("thread: {:?}, sample: {:?}", tid, sample);
+    });
+
     println!("press enter");
 
     let mut line = String::new();
@@ -98,29 +113,7 @@ pub fn main() {
         file.write(image_encoded.as_slice()).unwrap();
     }
 
-    // TODO: use some third party for image format
-    let header = vec![
-        0u8,
-        0u8,
-        2u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        //width   height
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        128u8,
-        7u8,
-        56u8,
-        4u8,
-        24u8,
-        0u8,
-    ];
     let mut file = File::create("out.tga").unwrap();
-    file.write(header.as_slice()).unwrap();
+    file.write(serialize(&image_header, Infinite).unwrap().as_slice()).unwrap();
     file.write(result_image.bitmap(10.0).as_slice()).unwrap();
 }

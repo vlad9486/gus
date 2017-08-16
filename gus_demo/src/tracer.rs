@@ -12,20 +12,8 @@ pub struct Tracer {
     image: Option<Image>,
 }
 
-pub struct Status {
-    pub count: usize,
-    pub seconds_per_sample: f32,
-}
-
 impl Tracer {
     pub fn new(scene: Scene, screen: Screen) -> Self {
-        /*let scene = {
-            let mut file = File::open(scene_filename)?;
-            let mut string = String::new();
-            file.read_to_string(&mut string)?;
-            deserialize(string.as_bytes()).unwrap()
-        };*/
-
         Tracer {
             scene: Arc::new(scene),
             screen: Arc::new(screen),
@@ -34,20 +22,23 @@ impl Tracer {
         }
     }
 
-    pub fn start(&mut self, number_of_threads: usize, image: Option<Image>) {
+    pub fn start<Report>(&mut self, number_of_threads: usize, image: Option<Image>, report: Report)
+            where Report: Fn(usize, usize) + Send + Sync + 'static {
+        let report = Arc::new(report);
         self.image = image;
         self.threads = (0..number_of_threads).into_iter().map(|i| {
             let (tx, rx) = mpsc::channel();
             let scene_ref_clone = self.scene.clone();
             let screen_ref_clone = self.screen.clone();
+            let report_ref_clone = report.clone();
             (thread::spawn(move || {
                 let mut rng = rand::thread_rng();
                 let mut image = screen_ref_clone.create_image();
                 let mut j = 0usize;
                 loop {
                     screen_ref_clone.sample(&*scene_ref_clone, &mut image, &mut rng);
+                    report_ref_clone(i, j);
                     j = j + 1;
-                    println!("thread: {:?}, sample: {:?}", i, j);
 
                     match rx.try_recv() {
                         Ok(_) | Err(mpsc::TryRecvError::Disconnected) => break (),
@@ -75,9 +66,5 @@ impl Tracer {
         }
 
         result_image
-    }
-
-    pub fn status(&self) -> Status {
-        unimplemented!()
     }
 }
