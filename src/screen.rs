@@ -122,7 +122,7 @@ impl Image {
         result
     }
 
-    pub fn append(&mut self, other: &Self) {
+    pub fn append(&mut self, other: Self) {
         assert!(self.format == other.format);
 
         self.count = self.count + other.count;

@@ -2,15 +2,25 @@ extern crate gus;
 extern crate rand;
 extern crate chrono;
 extern crate bincode;
+extern crate serde_json;
+
+mod tracer;
 
 use gus::*;
 
 use bincode::{serialize, deserialize, Infinite};
 
 use std::io::Write;
+use std::io::Read;
+use std::io::BufRead;
+use std::io::stdin;
 use std::fs::File;
+use std::fs::remove_file;
 use std::thread;
 use std::sync::Arc;
+
+use self::tracer::Tracer;
+use self::tracer::Status;
 
 pub fn main() {
     let scene = {
@@ -64,33 +74,28 @@ pub fn main() {
         Screen::new(format.clone(), eye)
     };
 
-    let scene_ref = Arc::new(scene);
-    let screen_ref = Arc::new(screen);
+    let mut tracer = Tracer::new(scene, screen);
+    let image = {
+        let mut file = File::open("out.bgus").unwrap();
+        let mut data = Vec::new();
+        file.read_to_end(&mut data).unwrap();
+        deserialize(data.as_slice()).unwrap()
+    };
+    tracer.start(4, Some(image));
+    println!("press enter");
 
-    let threads: Vec<_> = (0..4).into_iter().map(|_| {
-        let scene_ref_clone = scene_ref.clone();
-        let screen_ref_clone = screen_ref.clone();
-        thread::spawn(move || {
-            let mut rng = rand::thread_rng();
-            let mut image = screen_ref_clone.create_image();
-            for i in 0..2 {
-                screen_ref_clone.sample(&*scene_ref_clone, &mut image, &mut rng);
-                println!("sample: {:?}", i + 1);
-            }
-            image
-        })
-    }).collect();
+    let mut line = String::new();
+    let stdin = stdin();
+    let _ = stdin.lock().read_line(&mut line);
 
-    let mut result_image = (*screen_ref).create_image();
-    let images: Vec<Image> = threads.into_iter().map(|thread| { thread.join().unwrap() }).collect();
-    for &ref image in images.iter() {
-        result_image.append(&image);
-    }
+    println!("sending stop signal");
 
+    let result_image = tracer.stop();
+    let image_encoded: Vec<u8> = serialize(&result_image, Infinite).unwrap();
     {
-        let image_encoded: Vec<u8> = serialize(&result_image, Infinite).unwrap();
-        let mut file = File::create("out.gus").unwrap();
-        let _ = file.write(image_encoded.as_slice()).unwrap();
+        remove_file("out.bgus").unwrap();
+        let mut file = File::create("out.bgus").unwrap();
+        file.write(image_encoded.as_slice()).unwrap();
     }
 
     // TODO: use some third party for image format
@@ -116,6 +121,6 @@ pub fn main() {
         0u8,
     ];
     let mut file = File::create("out.tga").unwrap();
-    let _ = file.write(header.as_slice()).unwrap();
-    let _ = file.write(result_image.bitmap(10.0).as_slice()).unwrap();
+    file.write(header.as_slice()).unwrap();
+    file.write(result_image.bitmap(10.0).as_slice()).unwrap();
 }
