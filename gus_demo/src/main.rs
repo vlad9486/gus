@@ -8,21 +8,17 @@ extern crate serde_json;
 extern crate serde_derive;
 
 mod tracer;
+mod image;
 mod tga;
 
 use gus::*;
 
-use bincode::{serialize, deserialize, Infinite};
-
-use std::io::Write;
-use std::io::Read;
 use std::io::BufRead;
 use std::io::stdin;
-use std::fs::File;
-use std::fs::remove_file;
+use std::fs;
 
 use self::tracer::Tracer;
-use self::tga::TgaHeader;
+use self::image::LoadStore;
 
 pub fn main() {
     let scene = {
@@ -56,7 +52,7 @@ pub fn main() {
         Scene::new(vec![zp, zn, yp, yn, xp, xn, ml, mr, mo, source])
     };
 
-    let (screen, image_header) = {
+    let screen = {
         let format = Size {
             horizontal_count: 1920,
             vertical_count: 1080,
@@ -73,31 +69,20 @@ pub fn main() {
             distance: 1.5,
         };
 
-        (
-            Screen::new(format.clone(), eye),
-            TgaHeader::rgb(format.horizontal_count, format.vertical_count)
-        )
+        Screen::new(format.clone(), eye)
     };
 
-    /*let scene = {
-        let mut file = File::open(scene_filename)?;
-        let mut string = String::new();
-        file.read_to_string(&mut string)?;
-        deserialize(string.as_bytes()).unwrap()
-    };*/
+    let path = "out.bgus";
+    let path_backup = "out.backup.bgus";
+    let tga_path = "out.tga";
 
     let mut tracer = Tracer::new(scene, screen);
-    let image = {
-        let mut file = File::open("out.bgus").unwrap();
-        let mut data = Vec::new();
-        file.read_to_end(&mut data).unwrap();
-        deserialize(data.as_slice()).unwrap()
-    };
-    tracer.start(4, Some(image), |tid, sample| {
+    let image = Image::load(path);
+    tracer.start(4, image, |tid, sample| {
         println!("thread: {:?}, sample: {:?}", tid, sample);
     });
 
-    println!("press enter");
+    println!("press enter to terminate");
 
     let mut line = String::new();
     let stdin = stdin();
@@ -106,14 +91,8 @@ pub fn main() {
     println!("sending stop signal");
 
     let result_image = tracer.stop();
-    let image_encoded: Vec<u8> = serialize(&result_image, Infinite).unwrap();
-    {
-        remove_file("out.bgus").unwrap();
-        let mut file = File::create("out.bgus").unwrap();
-        file.write(image_encoded.as_slice()).unwrap();
-    }
-
-    let mut file = File::create("out.tga").unwrap();
-    file.write(serialize(&image_header, Infinite).unwrap().as_slice()).unwrap();
-    file.write(result_image.bitmap(10.0).as_slice()).unwrap();
+    let _ = fs::remove_file(path_backup);
+    fs::rename(path, path_backup).unwrap();
+    result_image.store(path);
+    result_image.store_tga(tga_path);
 }

@@ -130,4 +130,8 @@ impl Image {
             self.data[i] = self.data[i].clone() + other.data[i].clone();
         }
     }
+
+    pub fn size(&self) -> Size {
+        self.format.clone()
+    }
 }
