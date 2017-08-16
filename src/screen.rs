@@ -20,7 +20,7 @@ pub struct Size {
     pub vertical_count: usize,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Eye {
     pub position: V3,
     pub forward: V3,
@@ -32,6 +32,7 @@ pub struct Eye {
     pub distance: M,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Screen {
     format: Size,
     eye: Eye,

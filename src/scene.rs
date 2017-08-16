@@ -10,6 +10,7 @@ use std::cmp::Ordering;
 
 use rand::Rng;
 
+#[derive(Serialize, Deserialize)]
 pub struct Scene {
     spheres: Vec<Sphere>,
 }

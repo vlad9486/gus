@@ -16,6 +16,7 @@ mod color;
 
 pub use self::algebra::V3;
 pub use self::beam::Beam;
+pub use self::beam::BeamRefract;
 pub use self::beam::Material;
 pub use self::scene::Scene;
 pub use self::primitive::Sphere;

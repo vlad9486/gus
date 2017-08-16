@@ -73,7 +73,7 @@ impl SingleFate {
 }
 
 /// Beam struct is a compound of different Photons
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Serialize, Deserialize)]
 pub struct Beam {
     powers: [Density; SIZE],
 }
@@ -179,7 +179,7 @@ impl Add<Frequency> for Beam {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct BeamRefract {
     powers: [Factor; SIZE],
 }
@@ -233,7 +233,7 @@ impl Add<BeamRefract> for BeamRefract {
 }
 
 /// Material struct
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Serialize, Deserialize)]
 pub struct Material {
     emission: Beam,
     diffuse: Beam,

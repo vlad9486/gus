@@ -10,7 +10,7 @@ pub type M = f64;
 pub const M_PI: M = f64::consts::PI;
 pub const M_INFINITY: M = f64::INFINITY;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Serialize, Deserialize)]
 pub struct V3 {
     x: M,
     y: M,

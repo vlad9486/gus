@@ -36,7 +36,7 @@ impl PartialOrd for IntersectInfo {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Sphere {
     center: V3,
     radius: M,
