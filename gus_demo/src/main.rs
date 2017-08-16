@@ -93,8 +93,6 @@ pub fn main() {
         let _ = file.write(image_encoded.as_slice()).unwrap();
     }
 
-    let raw = result_image.raw_rgb(10.0);
-
     // TODO: use some third party for image format
     let header = vec![
         0u8,
@@ -119,5 +117,5 @@ pub fn main() {
     ];
     let mut file = File::create("out.tga").unwrap();
     let _ = file.write(header.as_slice()).unwrap();
-    let _ = file.write(raw.as_slice()).unwrap();
+    let _ = file.write(result_image.bitmap(10.0).as_slice()).unwrap();
 }

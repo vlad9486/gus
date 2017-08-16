@@ -109,7 +109,7 @@ impl Image {
         }
     }
 
-    pub fn raw_rgb(self, scale: Density) -> Vec<u8> {
+    pub fn bitmap(self, scale: Density) -> Vec<u8> {
         let format = &self.format;
         let capacity = format.horizontal_count * format.vertical_count * 3;
 
