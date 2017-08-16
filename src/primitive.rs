@@ -36,6 +36,11 @@ impl PartialOrd for IntersectInfo {
     }
 }
 
+pub trait Primitive {
+    fn intersect(&self, ray: &Ray) -> Option<IntersectInfo>;
+    fn result(&self, ray: &Ray, info: IntersectInfo) -> IntersectResult;
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Sphere {
     center: V3,
@@ -51,8 +56,10 @@ impl Sphere {
             material: material,
         }
     }
+}
 
-    pub fn intersect(&self, ray: &Ray) -> Option<IntersectInfo> {
+impl Primitive for Sphere {
+    fn intersect(&self, ray: &Ray) -> Option<IntersectInfo> {
         let q = self.center - ray.position();
         let p = ray.direction();
         let r = self.radius;
@@ -80,7 +87,7 @@ impl Sphere {
         distance.map(|t| (IntersectInfo { distance: t, r: r }))
     }
 
-    pub fn result(&self, ray: &Ray, info: IntersectInfo) -> IntersectResult {
+    fn result(&self, ray: &Ray, info: IntersectInfo) -> IntersectResult {
         let position = ray.position() + ray.direction() * info.distance;
         let normal = (position - self.center) / info.r;
         IntersectResult {
@@ -88,5 +95,40 @@ impl Sphere {
             normal: normal,
             material: self.material.clone(),
         }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct Triangle {
+    a: V3,
+    b: V3,
+    c: V3,
+    material: Material,
+}
+
+impl Primitive for Triangle {
+    fn intersect(&self, ray: &Ray) -> Option<IntersectInfo> {
+        let pa = self.a - ray.position();
+        let pb = self.b - ray.position();
+        let pc = self.c - ray.position();
+
+        let (ia, ib, ic) = V3::adj(pa, pb, pc);
+        let bx = ray.direction() * ia;
+        let by = ray.direction() * ib;
+        let bz = ray.direction() * ic;
+
+        if (bx >= 0.0) && (by >= 0.0) && (bz >= 0.0) {
+            let normal = (pc - pa).cross(pb - pa).normalize();
+            Some(IntersectInfo {
+                distance: pa * normal,
+                r: 1.0
+            })
+        } else {
+            None
+        }
+    }
+
+    fn result(&self, ray: &Ray, info: IntersectInfo) -> IntersectResult {
+        unimplemented!()
     }
 }

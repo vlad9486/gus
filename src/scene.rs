@@ -1,3 +1,4 @@
+use super::primitive::Primitive;
 use super::primitive::Sphere;
 
 use super::ray::Ray;

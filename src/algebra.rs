@@ -37,6 +37,14 @@ impl V3 {
             z: self.x * rhs.y - self.y * rhs.x,
         }
     }
+
+    pub fn adj(a: Self, b: Self, c: Self) -> (Self, Self, Self) {
+        let ia = V3::new(b.y * c.z - b.z * c.y, c.y * a.z - c.z * a.y, a.y * b.z - a.z * b.y);
+        let ib = V3::new(b.z * c.x - b.x * c.z, c.z * a.x - c.x * a.z, a.z * b.x - a.x * b.z);
+        let ic = V3::new(b.x * c.y - b.y * c.x, c.x * a.y - c.y * a.x, a.x * b.y - a.y * b.x);
+
+        (ia, ib, ic)
+    }
 }
 
 impl Add for V3 {
