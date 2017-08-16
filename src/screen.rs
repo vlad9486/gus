@@ -54,6 +54,10 @@ impl Screen {
         let format = &self.format;
         let eye = &self.eye;
 
+        let red = Beam::red();
+        let green = Beam::green();
+        let blue = Beam::blue();
+
         for i in 0..format.vertical_count {
             for j in 0..format.horizontal_count {
                 let mut beam = Beam::default();
@@ -79,7 +83,7 @@ impl Screen {
                     );
                 }
                 let rgb = &mut image.data[i * format.horizontal_count + j];
-                *rgb = rgb.clone() + beam.rgb()
+                *rgb = rgb.clone() + RGB::new(beam.clone() * &red, beam.clone() * &green, beam.clone() * &blue)
             }
         }
 

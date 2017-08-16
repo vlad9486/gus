@@ -78,8 +78,8 @@ pub fn main() {
 
     let mut tracer = Tracer::new(scene, screen);
     let image = Image::load(path);
-    tracer.start(4, image, |tid, sample| {
-        println!("thread: {:?}, sample: {:?}", tid, sample);
+    tracer.start(8, image, |tid, sample, elapsed_time| {
+        println!("thread: {:?}, sample: {:?}, elapsed_time: {:?}", tid, sample, elapsed_time);
     });
 
     println!("press enter to terminate");
@@ -92,7 +92,7 @@ pub fn main() {
 
     let result_image = tracer.stop();
     let _ = fs::remove_file(path_backup);
-    fs::rename(path, path_backup).unwrap();
+    let _ = fs::rename(path, path_backup);
     result_image.store(path);
     result_image.store_tga(tga_path);
 }

@@ -8,6 +8,8 @@ use rand::distributions::Range;
 
 use super::color;
 
+use super::algebra::M;
+
 const SIZE: usize = 24;
 
 /// Frequency struct is index in table
@@ -28,7 +30,7 @@ pub type Density = f32;
 
 /// Factor is a refraction coefficient
 
-pub type Factor = f64;
+pub type Factor = M;
 
 /// Fate
 
@@ -81,6 +83,7 @@ pub struct Beam {
 impl Beam {
     pub const SIZE: usize = SIZE;
 
+    #[inline(always)]
     fn populate(index: usize) -> Self {
         let mut powers = [0.0; Self::SIZE];
         for i in 0..Self::SIZE {
@@ -99,28 +102,23 @@ impl Beam {
         }
 
         let beam = Beam { powers: powers };
-        let length = (beam.clone() * beam.clone()).sqrt();
+        let length = (beam.clone() * &beam).sqrt();
         beam * (1.0 / length)
     }
 
+    #[inline(always)]
     pub fn red() -> Self {
         Self::populate(0)
     }
 
+    #[inline(always)]
     pub fn green() -> Self {
         Self::populate(1)
     }
 
+    #[inline(always)]
     pub fn blue() -> Self {
         Self::populate(2)
-    }
-
-    pub fn rgb(self) -> RGB {
-        RGB {
-            r: self.clone() * Beam::red(),
-            g: self.clone() * Beam::green(),
-            b: self.clone() * Beam::blue(),
-        }
     }
 
     fn density(&self, frequency: &Frequency) -> Density {
@@ -128,10 +126,10 @@ impl Beam {
     }
 }
 
-impl Mul<Beam> for Beam {
+impl<'a> Mul<&'a Beam> for Beam {
     type Output = Density;
 
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul(self, rhs: &'a Self) -> Self::Output {
         let mut product = 0.0;
         for i in 0..Self::SIZE {
             product = product + self.powers[i] * rhs.powers[i];

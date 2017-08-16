@@ -1,6 +1,8 @@
 use super::beam::RGB;
 
 pub const TABLE_SIZE: usize = 48;
+
+#[inline(always)]
 pub fn table() -> [(f32, RGB); TABLE_SIZE] {
     [
         (392.16, RGB::new( 2.7420E-03, -6.6577E-04,  1.8052E-02)),

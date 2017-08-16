@@ -5,6 +5,9 @@ use std::thread;
 use std::sync::Arc;
 use std::sync::mpsc;
 
+use chrono::Utc;
+use chrono::Timelike;
+
 pub struct Tracer {
     scene: Arc<Scene>,
     screen: Arc<Screen>,
@@ -23,7 +26,7 @@ impl Tracer {
     }
 
     pub fn start<Report>(&mut self, number_of_threads: usize, image: Option<Image>, report: Report)
-            where Report: Fn(usize, usize) + Send + Sync + 'static {
+            where Report: Fn(usize, usize, f64) + Send + Sync + 'static {
         let report = Arc::new(report);
         self.image = image;
         self.threads = (0..number_of_threads).into_iter().map(|i| {
@@ -34,10 +37,17 @@ impl Tracer {
             (thread::spawn(move || {
                 let mut rng = rand::thread_rng();
                 let mut image = screen_ref_clone.create_image();
+                let time = || {
+                    let t = Utc::now();
+                    (t.timestamp() as f64) + (t.nanosecond() as f64) / 1_000_000_000.0
+                };
                 let mut j = 0usize;
+                let mut last: f64 = time();
                 loop {
                     screen_ref_clone.sample(&*scene_ref_clone, &mut image, &mut rng);
-                    report_ref_clone(i, j);
+                    let temp = time();
+                    report_ref_clone(i, j, temp - last);
+                    last = temp;
                     j = j + 1;
 
                     match rx.try_recv() {
