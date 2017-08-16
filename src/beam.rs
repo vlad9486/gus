@@ -309,7 +309,7 @@ impl Add for Material {
 }
 
 /// RGB struct to pass on the screen
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Copy, Clone, Serialize, Deserialize)]
 pub struct RGB {
     r: Density,
     g: Density,

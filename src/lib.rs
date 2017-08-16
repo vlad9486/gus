@@ -1,6 +1,9 @@
 #![forbid(unsafe_code)]
 #![allow(non_shorthand_field_patterns)]
 
+#[macro_use]
+extern crate serde_derive;
+
 extern crate rand;
 
 mod algebra;

@@ -14,7 +14,7 @@ use rand::Rng;
 use rand::distributions::Sample;
 use rand::distributions::Range;
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Size {
     pub horizontal_count: usize,
     pub vertical_count: usize,
@@ -86,6 +86,7 @@ impl Screen {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Image {
     format: Size,
     data: Vec<RGB>,
