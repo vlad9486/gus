@@ -14,13 +14,13 @@ use rand::Rng;
 use rand::distributions::Sample;
 use rand::distributions::Range;
 
-#[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Size {
     pub horizontal_count: usize,
     pub vertical_count: usize,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Eye {
     pub position: V3,
     pub forward: V3,
@@ -46,7 +46,7 @@ impl Screen {
     }
 
     pub fn create_image(&self) -> Image {
-        Image::new(self.format)
+        Image::new(self.format.clone())
     }
 
     pub fn sample(&self, scene: &Scene, image: &mut Image, mut rng: &mut Rng) {
@@ -78,7 +78,7 @@ impl Screen {
                     );
                 }
                 let rgb = &mut image.data[i * format.horizontal_count + j];
-                *rgb = *rgb + beam.rgb()
+                *rgb = rgb.clone() + beam.rgb()
             }
         }
 
@@ -114,8 +114,8 @@ impl Image {
         let capacity = format.horizontal_count * format.vertical_count * 3;
 
         let mut result = Vec::with_capacity(capacity);
-        for &pixel in self.data.iter() {
-            (pixel * scale / self.count).update_raw(&mut result);
+        for &ref pixel in self.data.iter() {
+            (pixel.clone() * scale / self.count).update_raw(&mut result);
         }
 
         result
@@ -126,7 +126,7 @@ impl Image {
 
         self.count = self.count + other.count;
         for i in 0..self.data.len() {
-            self.data[i] = self.data[i] + other.data[i];
+            self.data[i] = self.data[i].clone() + other.data[i].clone();
         }
     }
 }

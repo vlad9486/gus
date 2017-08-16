@@ -19,27 +19,27 @@ pub fn main() {
         let d_rg = Material::diffuse(Beam::red() + Beam::green());
         let d_gb = Material::diffuse(Beam::green() + Beam::blue());
         let d_br = Material::diffuse(Beam::blue() + Beam::red());
-        let e_w = Material::emission(gray);
+        let e_w = Material::emission(gray.clone());
 
-        let dr = Material::diffuse(gray * 0.01) + Material::reflection(gray * 0.9);
+        let dr = Material::diffuse(gray.clone() * 0.01) + Material::reflection(gray.clone() * 0.9);
 
         let r = 100000.0;
-        let zp = Sphere::new(V3::new(0.0, 0.0, r + 20.0), r, d_rg);
+        let zp = Sphere::new(V3::new(0.0, 0.0, r + 20.0), r, d_rg.clone());
         let zn = Sphere::new(
             V3::new(0.0, 0.0, -r - 10.0),
             r,
-            Material::diffuse(gray * 0.5),
+            Material::diffuse(gray.clone() * 0.5),
         );
-        let yp = Sphere::new(V3::new(0.0, r + 10.0, 0.0), r, d_gb);
-        let yn = Sphere::new(V3::new(0.0, -r - 10.0, 0.0), r, d_gb);
-        let xp = Sphere::new(V3::new(r + 10.0, 0.0, 0.0), r, d_br);
-        let xn = Sphere::new(V3::new(-r - 10.0, 0.0, 0.0), r, d_br);
+        let yp = Sphere::new(V3::new(0.0, r + 10.0, 0.0), r, d_gb.clone());
+        let yn = Sphere::new(V3::new(0.0, -r - 10.0, 0.0), r, d_gb.clone());
+        let xp = Sphere::new(V3::new(r + 10.0, 0.0, 0.0), r, d_br.clone());
+        let xn = Sphere::new(V3::new(-r - 10.0, 0.0, 0.0), r, d_br.clone());
 
-        let source = Sphere::new(V3::new(0.0, 1000.0 + 9.98, 0.0), 1000.0, e_w);
+        let source = Sphere::new(V3::new(0.0, 1000.0 + 9.98, 0.0), 1000.0, e_w.clone());
 
-        let ml = Sphere::new(V3::new(-2.0, 0.0, 15.0), 2.0, dr);
-        let mr = Sphere::new(V3::new(3.5, -1.0, 12.0), 3.0, dr);
-        let mo = Sphere::new(V3::new(-1.5, 3.0, 9.0), 3.5, dr);
+        let ml = Sphere::new(V3::new(-2.0, 0.0, 15.0), 2.0, dr.clone());
+        let mr = Sphere::new(V3::new(3.5, -1.0, 12.0), 3.0, dr.clone());
+        let mo = Sphere::new(V3::new(-1.5, 3.0, 9.0), 3.5, dr.clone());
 
         Scene::new(vec![zp, zn, yp, yn, xp, xn, ml, mr, mo, source])
     };

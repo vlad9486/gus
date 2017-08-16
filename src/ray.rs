@@ -66,7 +66,7 @@ impl GeometricalRay for Ray {
         Ray {
             position: position + direction * Self::EPS,
             direction: direction,
-            frequency: self.frequency,
+            frequency: self.frequency.clone(),
         }
     }
 
@@ -78,7 +78,7 @@ impl GeometricalRay for Ray {
         Ray {
             position: position + direction * Self::EPS,
             direction: direction,
-            frequency: self.frequency,
+            frequency: self.frequency.clone(),
         }
     }
 
@@ -92,7 +92,7 @@ impl GeometricalRay for Ray {
             Ray {
                 position: position + direction * Self::EPS,
                 direction: direction,
-                frequency: self.frequency,
+                frequency: self.frequency.clone(),
             }
         } else {
             self.reflect(position, normal)
@@ -102,6 +102,6 @@ impl GeometricalRay for Ray {
 
 impl PhotonicRay for Ray {
     fn frequency(&self) -> Frequency {
-        self.frequency
+        self.frequency.clone()
     }
 }

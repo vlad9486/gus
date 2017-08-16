@@ -36,7 +36,7 @@ impl PartialOrd for IntersectInfo {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Sphere {
     center: V3,
     radius: M,
@@ -86,7 +86,7 @@ impl Sphere {
         IntersectResult {
             position: position,
             normal: normal,
-            material: self.material,
+            material: self.material.clone(),
         }
     }
 }

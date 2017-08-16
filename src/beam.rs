@@ -11,7 +11,7 @@ use super::color;
 const SIZE: usize = 24;
 
 /// Frequency struct is index in table
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Frequency {
     index: usize,
 }
@@ -25,6 +25,9 @@ impl Frequency {
 /// Density is a number of particles in ray
 
 pub type Density = f32;
+
+/// Factor is a refraction coefficient
+
 pub type Factor = f64;
 
 /// Fate
@@ -70,7 +73,7 @@ impl SingleFate {
 }
 
 /// Beam struct is a compound of different Photons
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Clone)]
 pub struct Beam {
     powers: [Density; SIZE],
 }
@@ -84,7 +87,7 @@ impl Beam {
             let value = {
                 let j = (i * color::TABLE_SIZE) / Self::SIZE;
                 let table = color::table();
-                let rgb = table[j].1;
+                let rgb = table[j].1.clone();
                 match index {
                     0 => rgb.r,
                     1 => rgb.g,
@@ -96,7 +99,7 @@ impl Beam {
         }
 
         let beam = Beam { powers: powers };
-        let length = (beam * beam).sqrt();
+        let length = (beam.clone() * beam.clone()).sqrt();
         beam * (1.0 / length)
     }
 
@@ -120,7 +123,7 @@ impl Beam {
         }
     }
 
-    fn density(&self, frequency: Frequency) -> Density {
+    fn density(&self, frequency: &Frequency) -> Density {
         self.powers[frequency.index]
     }
 }
@@ -176,7 +179,7 @@ impl Add<Frequency> for Beam {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct BeamRefract {
     powers: [Factor; SIZE],
 }
@@ -190,7 +193,7 @@ impl BeamRefract {
         }
     }
 
-    fn factor(&self, frequency: Frequency) -> Factor {
+    fn factor(&self, frequency: &Frequency) -> Factor {
         self.powers[frequency.index]
     }
 }
@@ -230,7 +233,7 @@ impl Add<BeamRefract> for BeamRefract {
 }
 
 /// Material struct
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Clone)]
 pub struct Material {
     emission: Beam,
     diffuse: Beam,
@@ -280,7 +283,7 @@ impl Material {
         }
     }
 
-    pub fn fate(&self, frequency: Frequency, mut rng: &mut Rng) -> Fate {
+    pub fn fate(&self, frequency: &Frequency, mut rng: &mut Rng) -> Fate {
         Fate {
             emission: fate(self.emission.density(frequency), &mut rng),
             single: SingleFate::new(
@@ -309,7 +312,7 @@ impl Add for Material {
 }
 
 /// RGB struct to pass on the screen
-#[derive(Default, Copy, Clone, Serialize, Deserialize)]
+#[derive(Default, Clone, Serialize, Deserialize)]
 pub struct RGB {
     r: Density,
     g: Density,

@@ -44,7 +44,7 @@ impl Scene {
                 let result = sphere.result(ray, m);
                 let mut rays = Vec::with_capacity(8);
 
-                let fate = result.material.fate(ray.frequency(), &mut rng);
+                let fate = result.material.fate(&ray.frequency(), &mut rng);
 
                 if fate.emission {
                     rays.push((*ray).clone());
