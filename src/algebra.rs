@@ -39,9 +39,17 @@ impl V3 {
     }
 
     pub fn adj(a: Self, b: Self, c: Self) -> (Self, Self, Self) {
-        let ia = V3::new(b.y * c.z - b.z * c.y, c.y * a.z - c.z * a.y, a.y * b.z - a.z * b.y);
-        let ib = V3::new(b.z * c.x - b.x * c.z, c.z * a.x - c.x * a.z, a.z * b.x - a.x * b.z);
-        let ic = V3::new(b.x * c.y - b.y * c.x, c.x * a.y - c.y * a.x, a.x * b.y - a.y * b.x);
+        let ia = V3::new(b.y * c.z - b.z * c.y, b.z * c.x - b.x * c.z, b.x * c.y - b.y * c.x);
+        let ib = V3::new(c.y * a.z - c.z * a.y, c.z * a.x - c.x * a.z, c.x * a.y - c.y * a.x);
+        let ic = V3::new(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+
+        (ia, ib, ic)
+    }
+
+    pub fn transpose(a: Self, b: Self, c: Self) -> (Self, Self, Self) {
+        let ia = V3::new(a.x, b.x, c.x);
+        let ib = V3::new(a.y, b.y, c.y);
+        let ic = V3::new(a.z, b.z, c.z);
 
         (ia, ib, ic)
     }
@@ -112,5 +120,49 @@ impl Neg for V3 {
             y: -self.y,
             z: -self.z,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use rand;
+    use rand::distributions::Sample;
+    use rand::distributions::Range;
+
+    #[test]
+    fn internal() {
+        let mut rng = rand::thread_rng();
+
+        let mut rnd_v3 = || {
+            let x = Range::new(-1.0, 1.0).sample(&mut rng);
+            let y = Range::new(-1.0, 1.0).sample(&mut rng);
+            let z = Range::new(-1.0, 1.0).sample(&mut rng);
+            V3::new(x, y, z)
+        };
+
+        let a = rnd_v3();
+        let b = rnd_v3();
+        let c = rnd_v3();
+
+        let (x, y, z) = {
+            let det = a.cross(b) * c;
+            let (x, y, z) = V3::adj(a, b, c);
+            (x / det, y / det, z / det)
+        };
+
+        let eps = 0.01;
+
+        assert!((x * a).abs() < 1.0 + eps);
+        assert!((y * b).abs() < 1.0 + eps);
+        assert!((z * c).abs() < 1.0 + eps);
+
+        assert!((x * b).abs() < eps);
+        assert!((x * c).abs() < eps);
+        assert!((y * a).abs() < eps);
+        assert!((y * c).abs() < eps);
+        assert!((z * a).abs() < eps);
+        assert!((z * b).abs() < eps);
     }
 }
