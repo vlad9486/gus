@@ -72,7 +72,7 @@ impl Tracer {
 
         let mut result_image = self.image.unwrap_or(self.screen.create_image());
         for image in images.into_iter() {
-            result_image.append(image);
+            result_image += image;
         }
 
         result_image

@@ -10,6 +10,8 @@ use super::beam::Beam;
 use super::beam::RGB;
 use super::beam::Density;
 
+use std::ops::AddAssign;
+
 use rand::Rng;
 use rand::distributions::Sample;
 use rand::distributions::Range;
@@ -126,16 +128,18 @@ impl Image {
         result
     }
 
-    pub fn append(&mut self, other: Self) {
-        assert!(self.format == other.format);
-
-        self.count = self.count + other.count;
-        for i in 0..self.data.len() {
-            self.data[i] = self.data[i].clone() + other.data[i].clone();
-        }
-    }
-
     pub fn size(&self) -> Size {
         self.format.clone()
+    }
+}
+
+impl AddAssign<Image> for Image {
+    fn add_assign(&mut self, rhs: Image) {
+        assert!(self.format == rhs.format);
+
+        self.count += rhs.count;
+        for i in 0..self.data.len() {
+            self.data[i] = self.data[i].clone() + rhs.data[i].clone();
+        }
     }
 }
