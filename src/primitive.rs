@@ -112,16 +112,26 @@ impl Primitive for Triangle {
         let pb = self.b - ray.position();
         let pc = self.c - ray.position();
 
+        // adjugated matrix transforms pa, pb, pc into orts scaled by determinant
         let (ia, ib, ic) = V3::adj(pa, pb, pc);
+
+        // coordinates of direction in adjugated space
         let bx = ray.direction() * ia;
         let by = ray.direction() * ib;
         let bz = ray.direction() * ic;
 
-        if (bx >= 0.0) && (by >= 0.0) && (bz >= 0.0) {
-            let normal = (pc - pa).cross(pb - pa).normalize();
+        // orientation of the triangle'a vertices
+        let cw = (bx >= 0.0) && (by >= 0.0) && (bz >= 0.0);
+        let ccw = (!cw) && (bx <= 0.0) && (by <= 0.0) && (bz <= 0.0);
+
+        if cw || ccw {
+            let r = if cw { 1.0 } else { -1.0 };
+            // scaled outer normal
+            let normal = (pc - pa).cross(pb - pa);
             Some(IntersectInfo {
-                distance: pa * normal,
-                r: 1.0
+                // it is not necessary to normalize the normal
+                distance: (pa * normal) / (ray.direction() * normal),
+                r: r
             })
         } else {
             None
