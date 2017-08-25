@@ -7,6 +7,8 @@ use super::ray::Ray;
 use super::ray::PhotonicRay;
 use super::ray::GeometricalRay;
 
+use std::cmp::Ordering;
+
 use super::beam::SingleFate;
 
 use rand::Rng;
@@ -44,7 +46,9 @@ impl Scene {
                     Some(info) => Some((primitive, info)),
                     None => None,
                 })
-                .min_by(|lhs, rhs| lhs.1.partial_cmp(&rhs.1).unwrap())
+                .min_by(|lhs, rhs| {
+                    lhs.1.partial_cmp(&rhs.1).unwrap_or(Ordering::Less)
+                })
         }
 
         let sphere = find_minimal(&self.spheres, ray);

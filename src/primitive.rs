@@ -15,10 +15,10 @@ pub struct IntersectResult {
     pub material: Material,
 }
 
-#[derive(PartialEq)]
 pub struct IntersectInfo {
     pub distance: M,
     r: M,
+    normal: Option<V3>
 }
 
 impl Default for IntersectInfo {
@@ -26,7 +26,14 @@ impl Default for IntersectInfo {
         IntersectInfo {
             distance: M_INFINITY,
             r: 0.0,
+            normal: None,
         }
+    }
+}
+
+impl PartialEq for IntersectInfo {
+    fn eq(&self, other: &Self) -> bool {
+        self.distance.eq(&other.distance) && self.r.eq(&other.r)
     }
 }
 
@@ -84,12 +91,12 @@ impl Primitive for Sphere {
             }
         };
 
-        distance.map(|t| (IntersectInfo { distance: t, r: r }))
+        distance.map(|t| (IntersectInfo { distance: t, r: r, normal: None }))
     }
 
     fn result(&self, ray: &Ray, info: IntersectInfo) -> IntersectResult {
         let position = ray.position() + ray.direction() * info.distance;
-        let normal = (position - self.center) / info.r;
+        let normal = info.normal.unwrap_or((position - self.center) / info.r);
         IntersectResult {
             position: position,
             normal: normal,
@@ -142,7 +149,8 @@ impl Primitive for Triangle {
             Some(IntersectInfo {
                 // it is not necessary to normalize the normal
                 distance: (pa * normal) / (ray.direction() * normal),
-                r: r
+                r: r,
+                normal: Some(normal)
             })
         } else {
             None
@@ -151,10 +159,9 @@ impl Primitive for Triangle {
 
     fn result(&self, ray: &Ray, info: IntersectInfo) -> IntersectResult {
         let position = ray.position() + ray.direction() * info.distance;
-        let normal = (self.c - self.a).cross(self.b - self.a).normalize();
         IntersectResult {
             position: position,
-            normal: normal,
+            normal: info.normal.unwrap_or((self.c - self.a).cross(self.b - self.a).normalize()),
             material: self.material.clone(),
         }
     }
