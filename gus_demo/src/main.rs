@@ -50,7 +50,7 @@ pub fn main() {
             V3::new(-2.0, 0.0, 15.0),
             V3::new(0.0, 3.0, 15.0),
             V3::new(2.0, 0.0, 15.0),
-            d_gb.clone()
+            dr.clone()
         );
 
         Scene::new(vec![zp, zn, yp, yn, xp, xn, /*ml, mr, mo, */source], vec!(triangle))

@@ -2,6 +2,7 @@ use super::primitive::Primitive;
 use super::primitive::Sphere;
 use super::primitive::Triangle;
 use super::primitive::IntersectInfo;
+use super::primitive::IntersectResult;
 
 use super::ray::Ray;
 use super::ray::PhotonicRay;
@@ -31,15 +32,10 @@ impl Scene {
         self.trace_internal(ray, &mut rng, 0)
     }
 
-    fn trace_internal(&self, ray: &Ray, mut rng: &mut Rng, level: usize) -> Vec<Ray> {
-        let maximal_level = 7;
-        if level == maximal_level {
-            return Vec::new();
-        }
-
+    fn intersect(&self, ray: &Ray) -> Option<IntersectResult> {
         fn find_minimal<'a, T>(v: &'a Vec<T>, ray: &Ray) -> Option<(&'a T, IntersectInfo)>
-        where
-            T: Primitive,
+            where
+                T: Primitive,
         {
             v.iter()
                 .flat_map(|primitive| match primitive.intersect(ray) {
@@ -54,7 +50,7 @@ impl Scene {
         let sphere = find_minimal(&self.spheres, ray);
         let triangle = find_minimal(&self.triangles, ray);
 
-        let result = match (sphere, triangle) {
+        match (sphere, triangle) {
             (Some((s, s_info)), Some((t, t_info))) => {
                 if s_info < t_info {
                     Some(s.result(ray, s_info))
@@ -65,33 +61,39 @@ impl Scene {
             (Some((s, s_info)), None) => Some(s.result(ray, s_info)),
             (None, Some((t, t_info))) => Some(t.result(ray, t_info)),
             _ => None,
-        };
+        }
+    }
 
-        if let Some(result) = result {
-            let mut rays = Vec::with_capacity(8);
+    fn trace_internal(&self, ray: &Ray, mut rng: &mut Rng, level: usize) -> Vec<Ray> {
+        let maximal_level = 7;
 
-            let fate = result.material.fate(&ray.frequency(), &mut rng);
+        if level < maximal_level {
+            if let Some(result) = self.intersect(ray) {
+                let fate = result.material.fate(&ray.frequency(), &mut rng);
 
-            if fate.emission {
-                rays.push((*ray).clone());
+                use self::SingleFate::*;
+                let new_ray = match fate.single {
+                    Decay => None,
+                    Diffuse => Some(ray.diffuse(result.position, result.normal, &mut rng)),
+                    Reflect => Some(ray.reflect(result.position, result.normal)),
+                    Refract(factor) => Some(ray.refract(result.position, result.normal, factor)),
+                };
+
+                let mut rays = Vec::with_capacity(maximal_level + 1);
+                if fate.emission {
+                    rays.push((*ray).clone());
+                }
+
+                if let Some(new_ray) = new_ray {
+                    rays.append(&mut self.trace_internal(&new_ray, rng, level + 1));
+                }
+
+                rays
+            } else {
+                Vec::with_capacity(maximal_level + 1)
             }
-
-            use self::SingleFate::*;
-            let ray = match fate.single {
-                Decay => None,
-                Diffuse => Some(ray.diffuse(result.position, result.normal, &mut rng)),
-                Reflect => Some(ray.reflect(result.position, result.normal)),
-                Refract(factor) => Some(ray.refract(result.position, result.normal, factor)),
-            };
-
-            if let Some(ray) = ray {
-                rays.append(&mut self.trace_internal(&ray, rng, level + 1));
-            }
-
-            rays
-
         } else {
-            Vec::new()
+            Vec::with_capacity(maximal_level + 1)
         }
     }
 }
