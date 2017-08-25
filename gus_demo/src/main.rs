@@ -42,11 +42,18 @@ pub fn main() {
 
         let source = Sphere::new(V3::new(0.0, 1000.0 + 9.98, -4.0), 1000.0, e_w.clone());
 
-        let ml = Sphere::new(V3::new(-2.0, 0.0, 15.0), 2.0, dr.clone());
+        /*let ml = Sphere::new(V3::new(-2.0, 0.0, 15.0), 2.0, dr.clone());
         let mr = Sphere::new(V3::new(3.5, -2.0, 12.0), 3.0, dr.clone());
-        let mo = Sphere::new(V3::new(-1.5, 3.0, 9.0), 3.5, dr.clone());
+        let mo = Sphere::new(V3::new(-1.5, 3.0, 9.0), 3.5, dr.clone());*/
 
-        Scene::new(vec![zp, zn, yp, yn, xp, xn, ml, mr, mo, source])
+        let triangle = Triangle::new(
+            V3::new(-2.0, 0.0, 15.0),
+            V3::new(0.0, 3.0, 15.0),
+            V3::new(2.0, 0.0, 15.0),
+            d_gb.clone()
+        );
+
+        Scene::new(vec![zp, zn, yp, yn, xp, xn, /*ml, mr, mo, */source], vec!(triangle))
     };
 
     let screen = {

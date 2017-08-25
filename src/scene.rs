@@ -1,5 +1,7 @@
 use super::primitive::Primitive;
 use super::primitive::Sphere;
+use super::primitive::Triangle;
+use super::primitive::IntersectInfo;
 
 use super::ray::Ray;
 use super::ray::PhotonicRay;
@@ -7,18 +9,20 @@ use super::ray::GeometricalRay;
 
 use super::beam::SingleFate;
 
-use std::cmp::Ordering;
-
 use rand::Rng;
 
 #[derive(Serialize, Deserialize)]
 pub struct Scene {
     spheres: Vec<Sphere>,
+    triangles: Vec<Triangle>,
 }
 
 impl Scene {
-    pub fn new(spheres: Vec<Sphere>) -> Self {
-        Scene { spheres: spheres }
+    pub fn new(spheres: Vec<Sphere>, triangles: Vec<Triangle>) -> Self {
+        Scene {
+            spheres: spheres,
+            triangles: triangles,
+        }
     }
 
     pub fn trace(&self, ray: &Ray, mut rng: &mut Rng) -> Vec<Ray> {
@@ -31,42 +35,59 @@ impl Scene {
             return Vec::new();
         }
 
-        let minimal = self.spheres
-            .iter()
-            .map(|sphere| (sphere, sphere.intersect(ray)))
-            .min_by(|lhs, rhs| match (&lhs.1, &rhs.1) {
-                (&None, &None) => Ordering::Equal,
-                (&Some(_), &None) => Ordering::Less,
-                (&None, &Some(_)) => Ordering::Greater,
-                (&Some(ref l), &Some(ref r)) => l.partial_cmp(&r).unwrap(),
-            });
+        fn find_minimal<'a, T>(v: &'a Vec<T>, ray: &Ray) -> Option<(&'a T, IntersectInfo)>
+        where
+            T: Primitive,
+        {
+            v.iter()
+                .flat_map(|primitive| match primitive.intersect(ray) {
+                    Some(info) => Some((primitive, info)),
+                    None => None,
+                })
+                .min_by(|lhs, rhs| lhs.1.partial_cmp(&rhs.1).unwrap())
+        }
 
-        match minimal {
-            Some((sphere, Some(m))) => {
-                let result = sphere.result(ray, m);
-                let mut rays = Vec::with_capacity(8);
+        let sphere = find_minimal(&self.spheres, ray);
+        let triangle = find_minimal(&self.triangles, ray);
 
-                let fate = result.material.fate(&ray.frequency(), &mut rng);
-
-                if fate.emission {
-                    rays.push((*ray).clone());
+        let result = match (sphere, triangle) {
+            (Some((s, s_info)), Some((t, t_info))) => {
+                if s_info < t_info {
+                    Some(s.result(ray, s_info))
+                } else {
+                    Some(t.result(ray, t_info))
                 }
-
-                use self::SingleFate::*;
-                let ray = match fate.single {
-                    Decay => None,
-                    Diffuse => Some(ray.diffuse(result.position, result.normal, &mut rng)),
-                    Reflect => Some(ray.reflect(result.position, result.normal)),
-                    Refract(factor) => Some(ray.refract(result.position, result.normal, factor)),
-                };
-
-                if let Some(ray) = ray {
-                    rays.append(&mut self.trace_internal(&ray, rng, level + 1));
-                }
-
-                rays
             }
-            _ => Vec::new(),
+            (Some((s, s_info)), None) => Some(s.result(ray, s_info)),
+            (None, Some((t, t_info))) => Some(t.result(ray, t_info)),
+            _ => None,
+        };
+
+        if let Some(result) = result {
+            let mut rays = Vec::with_capacity(8);
+
+            let fate = result.material.fate(&ray.frequency(), &mut rng);
+
+            if fate.emission {
+                rays.push((*ray).clone());
+            }
+
+            use self::SingleFate::*;
+            let ray = match fate.single {
+                Decay => None,
+                Diffuse => Some(ray.diffuse(result.position, result.normal, &mut rng)),
+                Reflect => Some(ray.reflect(result.position, result.normal)),
+                Refract(factor) => Some(ray.refract(result.position, result.normal, factor)),
+            };
+
+            if let Some(ray) = ray {
+                rays.append(&mut self.trace_internal(&ray, rng, level + 1));
+            }
+
+            rays
+
+        } else {
+            Vec::new()
         }
     }
 }

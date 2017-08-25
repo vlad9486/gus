@@ -106,6 +106,17 @@ pub struct Triangle {
     material: Material,
 }
 
+impl Triangle {
+    pub fn new(a: V3, b: V3, c: V3, material: Material) -> Self {
+        Triangle {
+            a: a,
+            b: b,
+            c: c,
+            material: material,
+        }
+    }
+}
+
 impl Primitive for Triangle {
     fn intersect(&self, ray: &Ray) -> Option<IntersectInfo> {
         let pa = self.a - ray.position();
@@ -139,6 +150,12 @@ impl Primitive for Triangle {
     }
 
     fn result(&self, ray: &Ray, info: IntersectInfo) -> IntersectResult {
-        unimplemented!()
+        let position = ray.position() + ray.direction() * info.distance;
+        let normal = (self.c - self.a).cross(self.b - self.a).normalize();
+        IntersectResult {
+            position: position,
+            normal: normal,
+            material: self.material.clone(),
+        }
     }
 }

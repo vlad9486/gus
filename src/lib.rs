@@ -20,6 +20,7 @@ pub use self::beam::BeamRefract;
 pub use self::beam::Material;
 pub use self::scene::Scene;
 pub use self::primitive::Sphere;
+pub use self::primitive::Triangle;
 pub use self::screen::Screen;
 pub use self::screen::Image;
 pub use self::screen::Eye;
