@@ -62,7 +62,6 @@ impl Screen {
 
         for i in 0..format.vertical_count {
             for j in 0..format.horizontal_count {
-                let mut beam = Beam::default();
 
                 let direction_calc = |dx: M, dy: M| {
                     let x = eye.width * (((j as M) + dx) / (format.horizontal_count as M) - 0.5);
@@ -71,21 +70,29 @@ impl Screen {
                     direction.normalize()
                 };
 
-                for k in 0..Beam::SIZE {
-                    let dx = Range::new(-0.5, 0.5).sample(&mut rng);
-                    let dy = Range::new(-0.5, 0.5).sample(&mut rng);
+                let beam = (0..Beam::SIZE).into_iter().fold(
+                    Beam::default(),
+                    |beam, k| {
+                        let dx = Range::new(-0.5, 0.5).sample(&mut rng);
+                        let dy = Range::new(-0.5, 0.5).sample(&mut rng);
 
-                    let rays = scene.trace(
-                        &Ray::new(eye.position, direction_calc(dx, dy), Frequency::new(k)),
-                        &mut rng,
-                    );
-                    beam = rays.into_iter().fold(
-                        beam,
-                        |beam, ray| beam + ray.frequency(),
-                    );
-                }
+                        scene
+                            .trace(
+                                &Ray::new(eye.position, direction_calc(dx, dy), Frequency::new(k)),
+                                &mut rng,
+                            )
+                            .into_iter()
+                            .fold(beam, |beam, ray| beam + ray.frequency())
+                    },
+                );
+
                 let rgb = &mut image.data[i * format.horizontal_count + j];
-                *rgb = rgb.clone() + RGB::new(beam.clone() * &red, beam.clone() * &green, beam.clone() * &blue)
+                *rgb = rgb.clone() +
+                    RGB::new(
+                        beam.clone() * &red,
+                        beam.clone() * &green,
+                        beam.clone() * &blue,
+                    )
             }
         }
 
@@ -102,12 +109,10 @@ pub struct Image {
 
 impl Image {
     fn new(format: Size) -> Self {
-        let capacity = format.horizontal_count * format.vertical_count;
-        let mut data = Vec::with_capacity(capacity);
-
-        for _ in 0..(format.vertical_count * format.horizontal_count) {
-            data.push(RGB::default())
-        }
+        let data = (0..(format.vertical_count * format.horizontal_count))
+            .into_iter()
+            .map(|_| RGB::default())
+            .collect();
 
         Image {
             format: format,
